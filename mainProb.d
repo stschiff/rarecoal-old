@@ -12,6 +12,7 @@ import std.math;
 import std.exception;
 
 size_t[] nVec, mVec;
+double[] popsizeVec;
 Join_t[] joins;
 size_t nrSteps = 10000;
 double alpha=0.001, tMax=20.0;
@@ -25,7 +26,7 @@ void mainProb(string[] argv) {
         printHelp(e);
         return;
     }
-    auto model = new Model(nVec, joins);
+    auto model = new Model(nVec, popsizeVec, joins);
     auto state = new CoalState(model, mVec);
     auto m = mVec.reduce!"a+b"();
     auto stepper = new Stepper(nrSteps, tMax, alpha);
@@ -42,28 +43,41 @@ void readParams(string[] argv) {
         auto t = fields[0].to!double();
         auto k = fields[1].to!size_t();
         auto l = fields[2].to!size_t();
-        joins ~= Join_t(t, k, l);
+        auto popsize = fields[3].to!double();
+        joins ~= Join_t(t, k, l, popsize);
+    }
+    
+    void handlePopsize(string option, string str) {
+        popsizeVec = str.split(",").map!"a.to!double()"().array();
     }
     
     getopt(argv, std.getopt.config.caseSensitive,
            "nrSteps|N", &nrSteps,
            "alpha|a"  , &alpha,
            "Tmax|T"   , &tMax,
-           "join|j"   , &handleJoins);
+           "join|j"   , &handleJoins,
+           "popsize|p" , &handlePopsize);
 
     enforce(argv.length == 3, "need more arguments");
     nVec = argv[1].split(",").map!"a.to!size_t()"().array();
     mVec = argv[2].split(",").map!"a.to!size_t()"().array();
+    if(popsizeVec.length == 0) {
+        popsizeVec = new double[nVec.length];
+        popsizeVec[] = 1.0;
+    }
+    
+    enforce(nVec.length == mVec.length && nVec.length == popsizeVec.length);
 }
 
 void printHelp(Exception e) {
     writeln(e.msg);
     writeln("./rarecoal prob [OPTIONS] <n1>[,<n2>[,...]] <m1>[,<m2>[,...]]
 Options:
-    --join, -j <t,k,l>   add a join at time t from population l to k
-    --nrSteps, -N <NR>  nr of steps in the stepper [10000]
-    --alpha, -a <A>     time scale of transitioning from linear to log scale time intervals [0.001]
-    --Tmax, -T <T>      maximum time interval boundary");
+    --join, -j <t,k,l,p>        add a join at time t from population l to k, setting the new population size to p
+    --nrSteps, -N <NR>          nr of steps in the stepper [10000]
+    --alpha, -a <A>             time scale of transitioning from linear to log scale time intervals [0.001]
+    --Tmax, -T <T>              maximum time interval boundary
+    --popsize, -p <p1,p2,...>   initial population sizes");
 }
 
 double binom(size_t m, size_t k) {

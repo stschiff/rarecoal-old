@@ -3,7 +3,14 @@ import std.array;
 import std.algorithm;
 import std.conv;
 import std.stdio;
+import std.string;
 import model;
+
+class IllegalJoinException : Exception {
+    this(string msg) {
+        super(msg);
+    }
+}
 
 class CoalState {
     Model model;
@@ -60,14 +67,14 @@ class CoalState {
     
     void update_a(double t_delta) {
         foreach(k, aa; a) {
-            auto lambda_ = model.coal_rate(k, t);
+            auto lambda_ = model.coal_rate(k);
             a_buf[k] = aa - (aa * (aa - 1.0)) / 2.0 * lambda_ * t_delta;
         }
     }
     
     void update_b(double t_delta) {
         foreach(k; 0 .. model.P) {
-            auto lambda_ = model.coal_rate(k, t);
+            auto lambda_ = model.coal_rate(k);
             foreach(i; 0 .. max_m[k] + 1) {
                 auto first = b[k][i] * i * (i - 1.0) / 2.0 * lambda_;
                 auto second = b[k][i] * i * a[k] * lambda_;
@@ -88,6 +95,8 @@ class CoalState {
     
     void perform_join(size_t k, size_t l) {
         // stderr.writefln("performing join, t=%s, (%s,%s)", t, k, l);
+        if(a[l] == 0)
+            throw new IllegalJoinException(format("tried to merge %s into %s at time %s", l, k, t));
         a[k] += a[l];
         a[l] = 0.0;
         auto new_max_m = max_m[k] + max_m[l];
@@ -117,8 +126,8 @@ class CoalState {
 
 unittest {
     auto nVec = [500UL, 500, 500];
-    auto joins = [Join_t(0.1, 0, 1), Join_t(0.2, 0, 2)];
-    auto m = new Model(nVec, joins);
+    auto joins = [Join_t(0.1, 0, 1, 1.0), Join_t(0.2, 0, 2, 1.0)];
+    auto m = new Model(nVec, [1.0, 1.0, 1.0], joins);
     
     auto cs = new CoalState(m, [1, 2, 0]);
     assert(cs.a == [499, 498, 500]);
@@ -133,5 +142,4 @@ unittest {
     cs.step(0.15);
     assert(cs.b[1][2] == 0.0);
     assert(cs.b[0][3] > 0.0);
-    
 }

@@ -16,6 +16,7 @@ import powell;
 
 Data input_data;
 Join_t[] joins;
+double[] popsizeVec;
 size_t nrSteps = 10000;
 double alpha=0.001, tMax=20.0;
 Stepper stepper_;
@@ -28,9 +29,11 @@ void mainMaxl(string[] argv) {
         printHelp(e);
         return;
     }
-    auto init_model = new Model(input_data.nVec, joins);
+    auto popsizeVec = new double[input_data.nVec.length];
+    popsizeVec[] = 1.0;
+    auto init_model = new Model(input_data.nVec, popsizeVec, joins);
     auto max_model = maximize(init_model, input_data);
-    writeln(max_model.joins);
+    writeln(max_model.joins.map!(j=>j.t));
 }
 
 void readParams(string[] argv) {
@@ -39,17 +42,28 @@ void readParams(string[] argv) {
         auto t = fields[0].to!double();
         auto k = fields[1].to!size_t();
         auto l = fields[2].to!size_t();
-        joins ~= Join_t(t, k, l);
+        auto popsize = fields[3].to!double();
+        joins ~= Join_t(t, k, l, popsize);
+    }
+    
+    void handlePopsize(string option, string str) {
+        popsizeVec = str.split(",").map!"a.to!double()"().array();
     }
     
     getopt(argv, std.getopt.config.caseSensitive,
            "nrSteps|N", &nrSteps,
            "alpha|a"  , &alpha,
            "Tmax|T"   , &tMax,
-           "join|j"   , &handleJoins);
+           "join|j"   , &handleJoins,
+           "popsize|p", &handlePopsize);
     
     enforce(argv.length == 2, "need more arguments");
     input_data = new Data(argv[1]);
+    if(popsizeVec.length == 0) {
+        popsizeVec = new double[input_data.nVec.length];
+        popsizeVec[] = 1.0;
+    }
+    enforce(popsizeVec.length == input_data.nVec.length);
     stepper_ = new Stepper(nrSteps, tMax, alpha);
 }
 
@@ -57,10 +71,12 @@ void printHelp(Exception e) {
     writeln(e.msg);
     writeln("./rarecoal maxl [OPTIONS] <input_file>
 Options:
-    --join, -j <t,k,l>   add a join at time t from population l to k
+    --join, -j <t,k,l,p>   add a join at time t from population l to k, setting new popsize to p
     --nrSteps, -N <NR>  nr of steps in the stepper [10000]
     --alpha, -a <A>     time scale of transitioning from linear to log scale time intervals [0.001]
-    --Tmax, -T <T>      maximum time interval boundary");
+    --Tmax, -T <T>      maximum time interval boundary
+    --popsize, -p <p1,p2,...>   initial population sizes");
+
 }
 
 Model maximize(Model init_model, Data input_data) {
@@ -95,8 +111,13 @@ class MinFunc {
         if(invalid(params))
             return penalty;
         auto new_model = params_to_model(params, model);
-        auto l = totalLikelihood(new_model, input_data, stepper_);
-        // writeln(l);
+        double l;
+        try {
+            l = totalLikelihood(new_model, input_data, stepper_);
+        }
+        catch(IllegalJoinException e) {
+            return penalty;
+        }
         return -l;
     }
     
@@ -113,5 +134,5 @@ Model params_to_model(in double[] params, in Model init_model) {
     auto joins = init_model.joins.dup;
     foreach(i, p; params)
         joins[i].t = p;
-    return new Model(init_model.nVec, joins);
+    return new Model(init_model.nVec, init_model.popsizeVec, joins);
 }

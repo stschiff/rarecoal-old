@@ -31,8 +31,8 @@ class Stepper {
 unittest {
     import model;
     auto nVec = [500UL, 500, 500];
-    auto joins = [Join_t(0.1, 0, 1), Join_t(0.2, 0, 2)];
-    auto m = new Model(nVec, joins);
+    auto joins = [Join_t(0.1, 0, 1, 1.0), Join_t(0.2, 0, 2, 1.0)];
+    auto m = new Model(nVec, [1.0, 1.0, 1.0], joins);
     
     auto cs = new CoalState(m, [1, 2, 0]);
     

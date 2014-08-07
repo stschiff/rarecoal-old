@@ -2,7 +2,7 @@ debug: build/debug/rarecoal
 
 release: build/release/rarecoal
 
-unittest:
+unittest: build/debug/unittest
 	build/debug/unittest
 
 build/debug/rarecoal : *.d

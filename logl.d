@@ -35,7 +35,7 @@ body {
 
 unittest {
     auto dat = new Data("testDat/testDat.txt");
-    auto model = new Model([500UL, 500], [Join_t(0.4, 0, 1)]);
+    auto model = new Model([500UL, 500], [1.0, 1.0], [Join_t(0.4, 0, 1, 1.0)]);
     auto stepper = new Stepper();
     auto l = totalLikelihood(model, dat, stepper);
     assert(l < 0.0 && l > -double.infinity);
