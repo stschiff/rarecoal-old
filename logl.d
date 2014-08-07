@@ -15,21 +15,22 @@ body {
     auto total_l = 0.0;
     auto log_l = 0.0;
     auto m = input_dat.max_m;
+    auto hom_type = (new size_t[model.nVec.length]).idup;
     foreach(order; input_dat.standardOrder) {
+        if(order == hom_type)
+            continue;
         model.reset();
         auto state = new CoalState(model, order);
         auto f = order.reduce!"a+b"();
         auto factor = zip(input_dat.nVec, order).map!(x => binom(x[0], x[1])).reduce!"a*b"();
         stepper.run(state);
-        auto l = f ? model.mu * state.d : exp(-model.mu * state.e);
-        // stderr.writeln(order, " ", l);
+        auto l = model.mu * state.d;
         total_l += l * factor;
         log_l += log(l) * (order in input_dat.counts ? input_dat.counts[order] : 0.0);
     }
     auto higher_l = 1.0 - total_l;
-    // stderr.writeln("HIGHER ", higher_l);
     assert(higher_l > 0.0);
-    log_l += log(higher_l) * input_dat.higher;
+    log_l += log(higher_l) * (input_dat.higher + input_dat.counts[hom_type.idup]);
     return log_l;
 }
 
