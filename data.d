@@ -7,8 +7,8 @@ import std.conv;
 
 class Data {
     int[] nVec;
-    int[immutable(int[])] counts;
-    int higher;
+    long[immutable(int[])] counts;
+    long higher;
     int max_m;
     int[][] standardOrder;
 
@@ -26,7 +26,7 @@ class Data {
             max_m = max_af;
         foreach(line_; f.byLine) {
             auto fields = line_.strip().split();
-            auto count = fields[1].to!int();
+            auto count = fields[1].to!long();
             if(fields[0] == "HIGHER")
                 higher += count;
             else {
@@ -81,7 +81,7 @@ unittest {
     auto data = new Data(fn);
     assert(data.counts.length == 15);
     assert(data.higher == 5275);
-    assert(data.nVec == [500UL, 500]);
+    assert(data.nVec == [500, 500]);
     
     data = new Data(fn, 2);
     assert(data.counts.length == 6);

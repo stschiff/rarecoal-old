@@ -21,6 +21,7 @@ int nrSteps = 10000;
 double alpha = 0.001, tMax = 20.0;
 Stepper stepper_;
 bool fixedPopSize = false;
+int max_af = 10;
 
 void mainMaxl(string[] argv) {
     try {
@@ -56,10 +57,11 @@ void readParams(string[] argv) {
            "Tmax|T"        , &tMax,
            "join|j"        , &handleJoins,
            "popsize|p"     , &handlePopsize,
-           "fixedPopSize|f", &fixedPopSize);
+           "fixedPopSize|f", &fixedPopSize,
+           "max_af|m"      , &max_af);
     
     enforce(argv.length == 2, "need more arguments");
-    input_data = new Data(argv[1]);
+    input_data = new Data(argv[1], max_af);
     if(popsizeVec.length == 0) {
         popsizeVec = new double[input_data.nVec.length];
         popsizeVec[] = 1.0;
@@ -77,7 +79,8 @@ Options:
     --alpha, -a <A>     time scale of transitioning from linear to log scale time intervals [0.001]
     --Tmax, -T <T>      maximum time interval boundary
     --popsize, -p <p1,p2,...>   initial population sizes
-    --fixedPopSize, -f  keep population sizes fixed during maximization");
+    --fixedPopSize, -f  keep population sizes fixed during maximization
+    --max_af, -m        maximum allele frequency to use [10]");
 
 }
 
