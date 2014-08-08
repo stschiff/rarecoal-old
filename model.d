@@ -1,29 +1,46 @@
 import std.typecons;
+import std.string;
+import std.algorithm;
+import std.conv;
 
-alias Tuple!(double, "t", size_t, "k", size_t, "l", double, "popsize") Join_t;
+alias Tuple!(double, "t", int, "k", int, "l", double, "popsize") Join_t;
+
+class IllegalModelException : Exception {
+    this(string msg) {
+        super(msg);
+    }
+}
 
 class Model {
-    const size_t[] nVec;
+    const int[] nVec;
     const double[] initialPopSizeVec;
     double[] popsizeVec;
     const Join_t[] joins;
     double mu;
-    size_t joins_index;
+    int joins_index;
     
-    this(in size_t[] nVec, in double[] popsizeVec, in Join_t[] joins=[], double mu=0.0005) {
+    this(in int[] nVec, in double[] popsizeVec, in Join_t[] joins=[], double mu=0.0005) {
         this.nVec = nVec;
+        if(popsizeVec.any!(p => p < 0.001)() || joins.any!(j => j.popsize < 0.001)())
+            throw new IllegalModelException("population size can't be lower than 0.001");
         this.initialPopSizeVec = popsizeVec;
+        assert(popsizeVec.all!"a>0.0"());
         this.popsizeVec = popsizeVec.dup;
+        assert(joins.all!"a.t>0.0 && a.popsize>0.0"());
         this.joins = joins;
         this.joins_index = 0;
         this.mu = mu;
     }
     
-    @property size_t P() {
-        return nVec.length;
+    @property int P() const {
+        return nVec.length.to!int();
     }
     
-    double coal_rate(size_t k) {
+    override string toString() const {
+        return format("Model {popsizeVec=%s, joins=%s, mu=%s}", popsizeVec, joins, mu);
+    }
+    
+    double coal_rate(int k) {
         return 1.0 / popsizeVec[k];
     }
     
@@ -49,7 +66,7 @@ class Model {
 }
 
 unittest {
-    auto nVec = [500UL, 500, 500];
+    auto nVec = [500, 500, 500];
     auto joins = [Join_t(0.1, 0, 1, 0.5), Join_t(0.2, 0, 2, 2.0)];
     auto m = new Model(nVec, [1.0, 1.0, 1.0], joins);
     assert(m.P == 3);

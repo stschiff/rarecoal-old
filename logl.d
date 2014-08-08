@@ -7,7 +7,7 @@ import data;
 import coal_state;
 import stepper;
 
-double totalLikelihood(Model model, in Data input_dat, in Stepper stepper, size_t nrSteps=10000, double alpha=0.001, double tMax=20.0)
+double totalLikelihood(Model model, in Data input_dat, in Stepper stepper, int nrSteps=10000, double alpha=0.001, double tMax=20.0)
 in {
     assert(model.nVec == input_dat.nVec);
 }
@@ -15,7 +15,7 @@ body {
     auto total_l = 0.0;
     auto log_l = 0.0;
     auto m = input_dat.max_m;
-    auto hom_type = (new size_t[model.nVec.length]).idup;
+    auto hom_type = (new int[model.nVec.length]).idup;
     foreach(order; input_dat.standardOrder) {
         if(order == hom_type)
             continue;
@@ -25,11 +25,13 @@ body {
         auto factor = zip(input_dat.nVec, order).map!(x => binom(x[0], x[1])).reduce!"a*b"();
         stepper.run(state);
         auto l = model.mu * state.d;
+        assert(!isNaN(l) && l > 0.0, text(l, " ", state.a, " ", state.b, " ", model, " ", order));
         total_l += l * factor;
         log_l += log(l) * (order in input_dat.counts ? input_dat.counts[order] : 0.0);
     }
     auto higher_l = 1.0 - total_l;
-    assert(higher_l > 0.0);
+    if(higher_l <= 0.0)
+        throw new IllegalModelException("likelihood of configurations exceeds one");
     log_l += log(higher_l) * (input_dat.higher + input_dat.counts[hom_type.idup]);
     return log_l;
 }
@@ -42,7 +44,7 @@ unittest {
     assert(l < 0.0 && l > -double.infinity);
 }
 
-double binom(size_t m, size_t k) {
+double binom(int m, int k) {
   return reduce!"a*b"(1.0, iota(1, k + 1).map!(i => to!double(m - (k - i)) / i));
 }
 

@@ -17,9 +17,10 @@ import powell;
 Data input_data;
 Join_t[] joins;
 double[] popsizeVec;
-size_t nrSteps = 10000;
-double alpha=0.001, tMax=20.0;
+int nrSteps = 10000;
+double alpha = 0.001, tMax = 20.0;
 Stepper stepper_;
+bool fixedPopSize = false;
 
 void mainMaxl(string[] argv) {
     try {
@@ -29,19 +30,18 @@ void mainMaxl(string[] argv) {
         printHelp(e);
         return;
     }
-    auto popsizeVec = new double[input_data.nVec.length];
-    popsizeVec[] = 1.0;
     auto init_model = new Model(input_data.nVec, popsizeVec, joins);
-    auto max_model = maximize(init_model, input_data);
-    writeln(max_model.joins.map!(j=>j.t));
+    auto max_model = maximize(init_model, input_data, fixedPopSize);
+    writeln(max_model.joins);
+    writeln(max_model.popsizeVec);
 }
 
 void readParams(string[] argv) {
     void handleJoins(string option, string str) {
         auto fields = str.split(",");
         auto t = fields[0].to!double();
-        auto k = fields[1].to!size_t();
-        auto l = fields[2].to!size_t();
+        auto k = fields[1].to!int();
+        auto l = fields[2].to!int();
         auto popsize = fields[3].to!double();
         joins ~= Join_t(t, k, l, popsize);
     }
@@ -51,11 +51,12 @@ void readParams(string[] argv) {
     }
     
     getopt(argv, std.getopt.config.caseSensitive,
-           "nrSteps|N", &nrSteps,
-           "alpha|a"  , &alpha,
-           "Tmax|T"   , &tMax,
-           "join|j"   , &handleJoins,
-           "popsize|p", &handlePopsize);
+           "nrSteps|N"     , &nrSteps,
+           "alpha|a"       , &alpha,
+           "Tmax|T"        , &tMax,
+           "join|j"        , &handleJoins,
+           "popsize|p"     , &handlePopsize,
+           "fixedPopSize|f", &fixedPopSize);
     
     enforce(argv.length == 2, "need more arguments");
     input_data = new Data(argv[1]);
@@ -75,47 +76,47 @@ Options:
     --nrSteps, -N <NR>  nr of steps in the stepper [10000]
     --alpha, -a <A>     time scale of transitioning from linear to log scale time intervals [0.001]
     --Tmax, -T <T>      maximum time interval boundary
-    --popsize, -p <p1,p2,...>   initial population sizes");
+    --popsize, -p <p1,p2,...>   initial population sizes
+    --fixedPopSize, -f  keep population sizes fixed during maximization");
 
 }
 
-Model maximize(Model init_model, Data input_data) {
+Model maximize(Model init_model, Data input_data, bool fixedPopSize) {
     
-    auto minFunc = new MinFunc(init_model, input_data, stepper_);
+    auto minFunc = new MinFunc(init_model, input_data, stepper_, fixedPopSize);
     auto powell = new Powell!MinFunc(minFunc);
 
-    auto init_params = model_to_params(init_model);
+    auto init_params = minFunc.model_to_params(init_model);
     auto min_params = powell.minimize(init_params);
 
-    auto min_model = params_to_model(min_params, init_model);
+    auto min_model = minFunc.params_to_model(min_params);
     return min_model;
 }
 
 class MinFunc {
-    const Model model;
+    const Model init_model;
     const Data input_data;
     double penalty = 1.0e20;
     const Stepper stepper_;
+    bool fixedPopSize;
 
-    this(in Model model, in Data input_data, in Stepper stepper_) {
-        this.model = model;
+    this(in Model init_model, in Data input_data, in Stepper stepper_, bool fixedPopSize) {
+        this.init_model = init_model;
         this.input_data = input_data;
         this.stepper_ = stepper_;
+        this.fixedPopSize = fixedPopSize;
     }
     
     double opCall(double[] params)
-    in {
-        assert(params.length == model.joins.length);
-    }
-    body {
+    {
         if(invalid(params))
             return penalty;
-        auto new_model = params_to_model(params, model);
         double l;
         try {
+            auto new_model = params_to_model(params);
             l = totalLikelihood(new_model, input_data, stepper_);
         }
-        catch(IllegalJoinException e) {
+        catch(IllegalModelException e) {
             return penalty;
         }
         return -l;
@@ -124,15 +125,39 @@ class MinFunc {
     bool invalid(in double[] params) {
         return params.any!"a<0.0"();
     }
+
+    Model params_to_model(in double[] params)
+    in {
+        if(fixedPopSize)
+            assert(params.length == init_model.joins.length);
+        else
+            assert(params.length == 2 * init_model.joins.length + init_model.P);
+    }
+    body {
+        auto joins = init_model.joins.dup;
+        auto nj = joins.length;
+        auto popsizeVec = init_model.popsizeVec.dup;
+        auto K = init_model.P;
+        foreach(i, p; params[0 .. nj])
+            joins[i].t = p;
+        
+        if(!fixedPopSize) {
+            foreach(i, p; params[nj .. nj + K])
+                popsizeVec[i] = p;
+            foreach(i, p; params[nj + K .. $])
+                joins[i].popsize = p;
+        }
+        return new Model(init_model.nVec, popsizeVec, joins);
+    }
+
+    double[] model_to_params(in Model model) {
+        auto ret = model.joins.map!(j => j.t.to!double())().array();
+        if(!fixedPopSize) {
+            ret ~= model.popsizeVec.dup;
+            ret ~= model.joins.map!(j => j.popsize.to!double())().array();
+        }
+        return ret;
+    }
 }
 
-double[] model_to_params(in Model model) {
-    return model.joins.map!(j => j.t)().array().dup;
-}
 
-Model params_to_model(in double[] params, in Model init_model) {
-    auto joins = init_model.joins.dup;
-    foreach(i, p; params)
-        joins[i].t = p;
-    return new Model(init_model.nVec, init_model.popsizeVec, joins);
-}

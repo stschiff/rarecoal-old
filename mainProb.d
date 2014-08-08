@@ -11,10 +11,10 @@ import std.range;
 import std.math;
 import std.exception;
 
-size_t[] nVec, mVec;
+int[] nVec, mVec;
 double[] popsizeVec;
 Join_t[] joins;
-size_t nrSteps = 10000;
+int nrSteps = 10000;
 double alpha=0.001, tMax=20.0;
 
 void mainProb(string[] argv) {
@@ -41,8 +41,8 @@ void readParams(string[] argv) {
     void handleJoins(string option, string str) {
         auto fields = str.split(",");
         auto t = fields[0].to!double();
-        auto k = fields[1].to!size_t();
-        auto l = fields[2].to!size_t();
+        auto k = fields[1].to!int();
+        auto l = fields[2].to!int();
         auto popsize = fields[3].to!double();
         joins ~= Join_t(t, k, l, popsize);
     }
@@ -59,8 +59,8 @@ void readParams(string[] argv) {
            "popsize|p" , &handlePopsize);
 
     enforce(argv.length == 3, "need more arguments");
-    nVec = argv[1].split(",").map!"a.to!size_t()"().array();
-    mVec = argv[2].split(",").map!"a.to!size_t()"().array();
+    nVec = argv[1].split(",").map!"a.to!int()"().array();
+    mVec = argv[2].split(",").map!"a.to!int()"().array();
     if(popsizeVec.length == 0) {
         popsizeVec = new double[nVec.length];
         popsizeVec[] = 1.0;
@@ -80,7 +80,7 @@ Options:
     --popsize, -p <p1,p2,...>   initial population sizes");
 }
 
-double binom(size_t m, size_t k) {
+double binom(int m, int k) {
   auto prod = 1.0;
   foreach(i; 1 .. k + 1) {
     prod *= to!double(m - (k - i)) / i;

@@ -6,31 +6,31 @@ import std.array;
 import std.conv;
 
 class Data {
-    size_t[] nVec;
-    size_t[immutable(size_t[])] counts;
-    size_t higher;
-    size_t max_m;
-    size_t[][] standardOrder;
+    int[] nVec;
+    int[immutable(int[])] counts;
+    int higher;
+    int max_m;
+    int[][] standardOrder;
 
-    this(string fn, size_t max_af=10) {
+    this(string fn, int max_af=10) {
         char[] line;
         auto f = File(fn, "r");
         f.readln(line);
         enforce(line[0..2] == "N=", "Expect 'N=' in file");
-        nVec = line[2..$].strip().split(",").map!"a.to!size_t()"().array();
-        auto P = nVec.length;
+        nVec = line[2..$].strip().split(",").map!"a.to!int()"().array();
+        auto P = nVec.length.to!int();
         f.readln(line);
         enforce(line[0..6] == "MAX_M=", "Expect 'N=' in file");
-        max_m = line[6..$].strip().to!size_t();
+        max_m = line[6..$].strip().to!int();
         if(max_m > max_af)
             max_m = max_af;
         foreach(line_; f.byLine) {
             auto fields = line_.strip().split();
-            auto count = fields[1].to!size_t();
+            auto count = fields[1].to!int();
             if(fields[0] == "HIGHER")
                 higher += count;
             else {
-                auto key = fields[0].split(",").map!"a.to!size_t()"().array();
+                auto key = fields[0].split(",").map!"a.to!int()"().array();
                 if(key.reduce!"a+b"() > max_af)
                     higher += count;
                 else
@@ -41,13 +41,13 @@ class Data {
     }
 }
 
-size_t[][] standardConfigOrder(size_t P, size_t m) {
-    bool[immutable(size_t)[]] lookup;
-    auto config = new size_t[P];
+int[][] standardConfigOrder(int P, int m) {
+    bool[immutable(int)[]] lookup;
+    auto config = new int[P];
     auto order = [config];
     lookup[config.idup] = true;
     foreach(i; 0 .. m) {
-        size_t[][] new_configs;
+        int[][] new_configs;
         foreach(o; order) {
             foreach(k; 0 .. P) {
                 auto new_config = o.dup;

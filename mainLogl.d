@@ -16,7 +16,7 @@ import logl;
 Data input_data;
 Join_t[] joins;
 double[] popsizeVec;
-size_t nrSteps = 10000;
+int nrSteps = 10000;
 double alpha=0.001, tMax=20.0;
 
 void mainLogl(string[] argv) {
@@ -39,8 +39,8 @@ void readParams(string[] argv) {
     void handleJoins(string option, string str) {
         auto fields = str.split(",");
         auto t = fields[0].to!double();
-        auto k = fields[1].to!size_t();
-        auto l = fields[2].to!size_t();
+        auto k = fields[1].to!int();
+        auto l = fields[2].to!int();
         auto popsize = fields[3].to!double();
         joins ~= Join_t(t, k, l, popsize);
     }

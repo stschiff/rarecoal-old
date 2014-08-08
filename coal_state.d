@@ -4,23 +4,25 @@ import std.algorithm;
 import std.conv;
 import std.stdio;
 import std.string;
+import std.math;
 import model;
 
-class IllegalJoinException : Exception {
-    this(string msg) {
-        super(msg);
-    }
+double approx_exp(double arg) {
+    if(abs(arg) < 0.05)
+        return 1.0 + arg;
+    else
+        return exp(arg);
 }
 
 class CoalState {
     Model model;
-    size_t[] max_m;
-    size_t m;
+    int[] max_m;
+    int m;
     double[] a, a_buf;
     double[][] b, b_buf;
     double d, e, t;
     
-    this(Model model, in size_t[] init)
+    this(Model model, in int[] init)
     in {
         assert(model.P == init.length);
     }
@@ -51,12 +53,8 @@ class CoalState {
         update_b(t_delta);
         update_e(t_delta);
         update_d(t_delta);
-        auto dummy = a;
-        a = a_buf;
-        a_buf = dummy;
-        auto b_dummy = b;
-        b = b_buf;
-        b_buf = b_dummy;
+        swap(a, a_buf);
+        swap(b, b_buf);
         auto jn = model.next_join();
         if(new_t > jn.t) {
             perform_join(jn.k, jn.l);
@@ -66,9 +64,9 @@ class CoalState {
     }
     
     void update_a(double t_delta) {
-        foreach(k, aa; a) {
+        foreach(int k, aa; a) {
             auto lambda_ = model.coal_rate(k);
-            a_buf[k] = aa - (aa * (aa - 1.0)) / 2.0 * lambda_ * t_delta;
+            a_buf[k] = aa * approx_exp(-(aa - 1.0) / 2.0 * lambda_ * t_delta);
         }
     }
     
@@ -76,10 +74,9 @@ class CoalState {
         foreach(k; 0 .. model.P) {
             auto lambda_ = model.coal_rate(k);
             foreach(i; 0 .. max_m[k] + 1) {
-                auto first = b[k][i] * i * (i - 1.0) / 2.0 * lambda_;
-                auto second = b[k][i] * i * a[k] * lambda_;
-                auto third = i < max_m[k] ? b[k][i + 1] * i * (i + 1.0) / 2.0 * lambda_ : 0.0;
-                b_buf[k][i] = b[k][i] + (-first - second + third) * t_delta;
+                b_buf[k][i] = b[k][i] * approx_exp(-(i * (i - 1.0) / 2.0 + i * a[k]) * lambda_ * t_delta);
+                if(i < max_m[k])
+                    b_buf[k][i] += b[k][i + 1] * (1.0 - approx_exp(-i * (i + 1.0) / 2.0 * lambda_ * t_delta));
             }
         }
     }
@@ -93,10 +90,9 @@ class CoalState {
         e += a.reduce!"a+b"() * t_delta;
     }
     
-    void perform_join(size_t k, size_t l) {
-        // stderr.writefln("performing join, t=%s, (%s,%s)", t, k, l);
-        if(a[l] == 0)
-            throw new IllegalJoinException(format("tried to merge %s into %s at time %s", l, k, t));
+    void perform_join(int k, int l) {
+        if(a[l] + max_m[l] == 0)
+            throw new IllegalModelException(format("tried to merge %s into %s at time %s", l, k, t));
         a[k] += a[l];
         a[l] = 0.0;
         auto new_max_m = max_m[k] + max_m[l];
@@ -113,7 +109,7 @@ class CoalState {
         max_m[l] = 0;
     }
     
-    double compute_c(size_t k) {
+    double compute_c(int k) {
         if(max_m[k] == 0)
             return 0.0;
         auto ret = b[k][1];
@@ -125,7 +121,7 @@ class CoalState {
 }
 
 unittest {
-    auto nVec = [500UL, 500, 500];
+    auto nVec = [500, 500, 500];
     auto joins = [Join_t(0.1, 0, 1, 1.0), Join_t(0.2, 0, 2, 1.0)];
     auto m = new Model(nVec, [1.0, 1.0, 1.0], joins);
     
