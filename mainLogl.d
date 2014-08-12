@@ -16,10 +16,8 @@ import logl;
 Data input_data;
 Join_t[] joins;
 double[] popsizeVec;
-int nrSteps = 10000;
-double alpha=0.001, tMax=20.0;
 
-void mainLogl(string[] argv) {
+void mainLogl(string[] argv, double mu, int n0, int lingen, double tMax) {
     
     try {
         readParams(argv);
@@ -29,8 +27,8 @@ void mainLogl(string[] argv) {
         return;
     }
     auto model = new Model(input_data.nVec, popsizeVec, joins);
-    auto stepper = new Stepper(nrSteps, tMax, alpha);
-    auto logl = totalLikelihood(model, input_data, stepper);
+    auto stepper = Stepper.make_stepper(n0, lingen, tMax);
+    auto logl = totalLikelihood(model, input_data, stepper, mu * 2.0 * n0);
     writeln(logl);
 
 }
@@ -50,9 +48,6 @@ void readParams(string[] argv) {
     }
     
     getopt(argv, std.getopt.config.caseSensitive,
-           "nrSteps|N", &nrSteps,
-           "alpha|a"  , &alpha,
-           "Tmax|T"   , &tMax,
            "join|j"   , &handleJoins,
            "popsize|p", &handlePopsize);
     
@@ -70,9 +65,6 @@ void printHelp(Exception e) {
     writeln("./rarecoal prob [OPTIONS] <input_file>
 Options:
     --join, -j <t,k,l,popsize>   add a join at time t from population l to k, setting the new popsize
-    --nrSteps, -N <NR>  nr of steps in the stepper [10000]
-    --alpha, -a <A>     time scale of transitioning from linear to log scale time intervals [0.001]
-    --Tmax, -T <T>      maximum time interval boundary
     --popsize, -p <p1,p2,...>   initial population sizes");
 }
 

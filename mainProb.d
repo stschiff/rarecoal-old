@@ -14,10 +14,8 @@ import std.exception;
 int[] nVec, mVec;
 double[] popsizeVec;
 Join_t[] joins;
-int nrSteps = 10000;
-double alpha=0.001, tMax=20.0;
 
-void mainProb(string[] argv) {
+void mainProb(string[] argv, double mu, int n0, int lingen, double tMax) {
     
     try {
         readParams(argv);
@@ -29,10 +27,11 @@ void mainProb(string[] argv) {
     auto model = new Model(nVec, popsizeVec, joins);
     auto state = new CoalState(model, mVec);
     auto m = mVec.reduce!"a+b"();
-    auto stepper = new Stepper(nrSteps, tMax, alpha);
+    auto stepper = Stepper.make_stepper(n0, lingen, tMax);
     auto factor = zip(nVec, mVec).map!(x => binom(x[0], x[1])).reduce!"a*b"();
     stepper.run(state);
-    auto result = m ? model.mu * factor * state.d : exp(-model.mu * state.e);
+    auto theta = 2.0 * n0 * mu;
+    auto result = m ? theta * factor * state.d : exp(-theta * state.e);
     writeln(result);
 
 }
@@ -51,12 +50,7 @@ void readParams(string[] argv) {
         popsizeVec = str.split(",").map!"a.to!double()"().array();
     }
     
-    getopt(argv, std.getopt.config.caseSensitive,
-           "nrSteps|N", &nrSteps,
-           "alpha|a"  , &alpha,
-           "Tmax|T"   , &tMax,
-           "join|j"   , &handleJoins,
-           "popsize|p" , &handlePopsize);
+    getopt(argv, std.getopt.config.caseSensitive, "join|j", &handleJoins, "popsize|p", &handlePopsize);
 
     enforce(argv.length == 3, "need more arguments");
     nVec = argv[1].split(",").map!"a.to!int()"().array();
@@ -74,9 +68,6 @@ void printHelp(Exception e) {
     writeln("./rarecoal prob [OPTIONS] <n1>[,<n2>[,...]] <m1>[,<m2>[,...]]
 Options:
     --join, -j <t,k,l,p>        add a join at time t from population l to k, setting the new population size to p
-    --nrSteps, -N <NR>          nr of steps in the stepper [10000]
-    --alpha, -a <A>             time scale of transitioning from linear to log scale time intervals [0.001]
-    --Tmax, -T <T>              maximum time interval boundary
     --popsize, -p <p1,p2,...>   initial population sizes");
 }
 

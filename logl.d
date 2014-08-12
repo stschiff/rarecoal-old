@@ -7,7 +7,7 @@ import data;
 import coal_state;
 import stepper;
 
-double totalLikelihood(Model model, in Data input_dat, in Stepper stepper, int nrSteps=10000, double alpha=0.001, double tMax=20.0)
+double totalLikelihood(Model model, in Data input_dat, in Stepper stepper, double theta)
 in {
     assert(model.nVec == input_dat.nVec);
 }
@@ -24,7 +24,7 @@ body {
         auto f = order.reduce!"a+b"();
         auto factor = zip(input_dat.nVec, order).map!(x => binom(x[0], x[1])).reduce!"a*b"();
         stepper.run(state);
-        auto l = model.mu * state.d;
+        auto l = theta * state.d;
         assert(!isNaN(l) && l > 0.0, text(l, " ", state.a, " ", state.b, " ", model, " ", order));
         total_l += l * factor;
         log_l += log(l) * (order in input_dat.counts ? input_dat.counts[order] : 0.0);
@@ -40,7 +40,7 @@ unittest {
     auto dat = new Data("testDat/testDat.txt");
     auto model = new Model([500UL, 500], [1.0, 1.0], [Join_t(0.4, 0, 1, 1.0)]);
     auto stepper = new Stepper();
-    auto l = totalLikelihood(model, dat, stepper);
+    auto l = totalLikelihood(model, dat, stepper, 0.0005);
     assert(l < 0.0 && l > -double.infinity);
 }
 

@@ -1,4 +1,6 @@
 import std.math;
+import std.conv;
+import std.stdio;
 import coal_state;
 
 class Stepper {
@@ -14,6 +16,14 @@ class Stepper {
         time_boundaries = new double[nr_steps];
         foreach(i; 0 .. nr_steps)
             time_boundaries[i] = time_function(i);
+    }
+    
+    static Stepper make_stepper(int n0=20000, int lingen=400, double tMax=20) {
+        auto t_min = 1.0 / (2.0 * n0);
+        auto alpha = lingen / (2.0 * n0);
+        auto nr_steps = to!int(log(1.0 + tMax / alpha) / log(1.0 + t_min / alpha));
+        stderr.writefln("Stepper: Discretizing into %s steps", nr_steps);
+        return new Stepper(nr_steps, tMax, alpha);
     }
     
     double time_function(int i) const {

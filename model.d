@@ -16,10 +16,9 @@ class Model {
     const double[] initialPopSizeVec;
     double[] popsizeVec;
     const Join_t[] joins;
-    double mu;
     int joins_index;
     
-    this(in int[] nVec, in double[] popsizeVec, in Join_t[] joins=[], double mu=0.0005) {
+    this(in int[] nVec, in double[] popsizeVec, in Join_t[] joins=[]) {
         this.nVec = nVec;
         if(popsizeVec.any!(p => p < 0.001)() || joins.any!(j => j.popsize < 0.001)())
             throw new IllegalModelException("population size can't be lower than 0.001");
@@ -29,7 +28,6 @@ class Model {
         assert(joins.all!"a.t>0.0 && a.popsize>0.0"());
         this.joins = joins;
         this.joins_index = 0;
-        this.mu = mu;
     }
     
     @property int P() const {
@@ -37,7 +35,7 @@ class Model {
     }
     
     override string toString() const {
-        return format("Model {popsizeVec=%s, joins=%s, mu=%s}", popsizeVec, joins, mu);
+        return format("Model {popsizeVec=%s, joins=%s}", popsizeVec, joins);
     }
     
     double coal_rate(int k) {

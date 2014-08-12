@@ -17,13 +17,11 @@ import powell;
 Data input_data;
 Join_t[] joins;
 double[] popsizeVec;
-int nrSteps = 10000;
-double alpha = 0.001, tMax = 20.0;
-Stepper stepper_;
 bool fixedPopSize = false;
 int max_af = 10;
+double theta;
 
-void mainMaxl(string[] argv) {
+void mainMaxl(string[] argv, double mu, int n0, int lingen, double tMax) {
     try {
         readParams(argv);
     }
@@ -31,8 +29,10 @@ void mainMaxl(string[] argv) {
         printHelp(e);
         return;
     }
+    theta = 2.0 * mu * n0;
     auto init_model = new Model(input_data.nVec, popsizeVec, joins);
-    auto max_model = maximize(init_model, input_data, fixedPopSize);
+    auto stepper = Stepper.make_stepper(n0, lingen, tMax);
+    auto max_model = maximize(init_model, stepper, input_data, fixedPopSize);
     writeln(max_model.joins);
     writeln(max_model.popsizeVec);
 }
@@ -52,9 +52,6 @@ void readParams(string[] argv) {
     }
     
     getopt(argv, std.getopt.config.caseSensitive,
-           "nrSteps|N"     , &nrSteps,
-           "alpha|a"       , &alpha,
-           "Tmax|T"        , &tMax,
            "join|j"        , &handleJoins,
            "popsize|p"     , &handlePopsize,
            "fixedPopSize|f", &fixedPopSize,
@@ -67,7 +64,6 @@ void readParams(string[] argv) {
         popsizeVec[] = 1.0;
     }
     enforce(popsizeVec.length == input_data.nVec.length);
-    stepper_ = new Stepper(nrSteps, tMax, alpha);
 }
 
 void printHelp(Exception e) {
@@ -75,18 +71,15 @@ void printHelp(Exception e) {
     writeln("./rarecoal maxl [OPTIONS] <input_file>
 Options:
     --join, -j <t,k,l,p>   add a join at time t from population l to k, setting new popsize to p
-    --nrSteps, -N <NR>  nr of steps in the stepper [10000]
-    --alpha, -a <A>     time scale of transitioning from linear to log scale time intervals [0.001]
-    --Tmax, -T <T>      maximum time interval boundary
     --popsize, -p <p1,p2,...>   initial population sizes
     --fixedPopSize, -f  keep population sizes fixed during maximization
     --max_af, -m        maximum allele frequency to use [10]");
 
 }
 
-Model maximize(Model init_model, Data input_data, bool fixedPopSize) {
+Model maximize(Model init_model, Stepper stepper, Data input_data, bool fixedPopSize) {
     
-    auto minFunc = new MinFunc(init_model, input_data, stepper_, fixedPopSize);
+    auto minFunc = new MinFunc(init_model, input_data, stepper, fixedPopSize);
     auto powell = new Powell!MinFunc(minFunc);
 
     auto init_params = minFunc.model_to_params(init_model);
@@ -117,7 +110,7 @@ class MinFunc {
         double l;
         try {
             auto new_model = params_to_model(params);
-            l = totalLikelihood(new_model, input_data, stepper_);
+            l = totalLikelihood(new_model, input_data, stepper_, theta);
         }
         catch(IllegalModelException e) {
             return penalty;
