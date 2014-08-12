@@ -33,8 +33,9 @@ void mainMaxl(string[] argv) {
     }
     auto init_model = new Model(input_data.nVec, popsizeVec, joins);
     auto max_model = maximize(init_model, input_data, fixedPopSize);
-    writeln(max_model.joins);
-    writeln(max_model.popsizeVec);
+    stderr.writeln(max_model.joins);
+    stderr.writeln(max_model.popsizeVec);
+    report(max_model);
 }
 
 void readParams(string[] argv) {
@@ -96,6 +97,17 @@ Model maximize(Model init_model, Data input_data, bool fixedPopSize) {
     return min_model;
 }
 
+void report(Model model) {
+    writefln("Population sizes\t%s", model.popsizeVec.map!"text(a)"().join(","));
+    foreach(j; model.joins)
+        writefln("Join\t%s,%s,%s,%s", j.t, j.k, j.l, j.popsize);
+    char[] cmdopt;
+    cmdopt ~= format("-p %s", model.popsizeVec.map!"text(a)"().join(","));
+    foreach(j; model.joins)
+        cmdopt ~= format(" -j %s,%s,%s,%s", j.t, j.k, j.l, j.popsize);
+    writefln("command line options\t%s", cmdopt);
+}
+
 class MinFunc {
     const Model init_model;
     const Data input_data;
@@ -108,6 +120,7 @@ class MinFunc {
         this.input_data = input_data;
         this.stepper_ = stepper_;
         this.fixedPopSize = fixedPopSize;
+        totalLikelihood(new Model(init_model.nVec, init_model.popsizeVec, init_model.joins), input_data, stepper_); // this just serves to check for any exceptions with the initial model
     }
     
     double opCall(double[] params)

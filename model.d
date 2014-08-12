@@ -2,6 +2,7 @@ import std.typecons;
 import std.string;
 import std.algorithm;
 import std.conv;
+import std.array;
 
 alias Tuple!(double, "t", int, "k", int, "l", double, "popsize") Join_t;
 
@@ -15,7 +16,7 @@ class Model {
     const int[] nVec;
     const double[] initialPopSizeVec;
     double[] popsizeVec;
-    const Join_t[] joins;
+    Join_t[] joins;
     double mu;
     int joins_index;
     
@@ -27,7 +28,7 @@ class Model {
         assert(popsizeVec.all!"a>0.0"());
         this.popsizeVec = popsizeVec.dup;
         assert(joins.all!"a.t>0.0 && a.popsize>0.0"());
-        this.joins = joins;
+        this.joins = joins.dup.sort!"a.t < b.t"().array();
         this.joins_index = 0;
         this.mu = mu;
     }

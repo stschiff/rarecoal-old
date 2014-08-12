@@ -56,9 +56,10 @@ class CoalState {
         swap(a, a_buf);
         swap(b, b_buf);
         auto jn = model.next_join();
-        if(new_t > jn.t) {
+        while(new_t > jn.t) {
             perform_join(jn.k, jn.l);
             model.join_done();
+            jn = model.next_join();
         }
         t = new_t;
     }
@@ -91,8 +92,10 @@ class CoalState {
     }
     
     void perform_join(int k, int l) {
-        if(a[l] + max_m[l] == 0)
-            throw new IllegalModelException(format("tried to merge %s into %s at time %s", l, k, t));
+        if(a[l] == 0)
+            throw new IllegalModelException(format("merge (%s=>%s) at time %s: empty source population: %s", l, k, t, a[l]));
+        if(a[k] == 0)
+            throw new IllegalModelException(format("merge (%s=>%s) at time %s: empty target population", l, k, t));
         a[k] += a[l];
         a[l] = 0.0;
         auto new_max_m = max_m[k] + max_m[l];
