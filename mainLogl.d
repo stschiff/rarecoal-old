@@ -16,6 +16,7 @@ import logl;
 Data input_data;
 Join_t[] joins;
 double[] popsizeVec;
+int max_af = 10;
 
 void mainLogl(string[] argv, double mu, int n0, int lingen, double tMax) {
     
@@ -29,7 +30,7 @@ void mainLogl(string[] argv, double mu, int n0, int lingen, double tMax) {
     auto model = new Model(input_data.nVec, popsizeVec, joins);
     auto stepper = Stepper.make_stepper(n0, lingen, tMax);
     auto logl = totalLikelihood(model, input_data, stepper, mu * 2.0 * n0);
-    writeln(logl);
+    writefln("%10.2f", logl);
 
 }
 
@@ -49,10 +50,11 @@ void readParams(string[] argv) {
     
     getopt(argv, std.getopt.config.caseSensitive,
            "join|j"   , &handleJoins,
-           "popsize|p", &handlePopsize);
+           "popsize|p", &handlePopsize,
+           "max_af|m" , &max_af);
     
     enforce(argv.length == 2, "need more arguments");
-    input_data = new Data(argv[1]);
+    input_data = new Data(argv[1], max_af);
     if(popsizeVec.length == 0) {
         popsizeVec = new double[input_data.nVec.length];
         popsizeVec[] = 1.0;
@@ -64,7 +66,8 @@ void printHelp(Exception e) {
     writeln(e.msg);
     writeln("./rarecoal prob [OPTIONS] <input_file>
 Options:
-    --join, -j <t,k,l,popsize>   add a join at time t from population l to k, setting the new popsize
-    --popsize, -p <p1,p2,...>   initial population sizes");
+    --join, -j <t,k,l,popsize>  add a join at time t from population l to k, setting the new popsize
+    --popsize, -p <p1,p2,...>   initial population sizes
+    --max_af, -m                maximum allele frequency to use [10]");
 }
 

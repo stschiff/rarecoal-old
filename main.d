@@ -3,6 +3,7 @@ import std.getopt;
 import mainProb;
 import mainLogl;
 import mainMaxl;
+import mainMCMC;
 
 double mu = 1.25e-8;
 int n0 = 20000;
@@ -38,6 +39,9 @@ else {
         }
         else if(argv[1] == "maxl") {
             mainMaxl.mainMaxl(argv[1 .. $], mu, n0, lingen, tMax);
+        }
+        else if(argv[1] == "mcmc") {
+            mainMCMC.mainMCMC(argv[1 .. $], mu, n0, lingen, tMax);
         }
         else {
             printHelp();
