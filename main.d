@@ -28,6 +28,7 @@ else {
         }
         
         if(argv.length < 2) {
+            stderr.writeln("need to specify subprogram");
             printHelp();
             return;
         }
@@ -44,12 +45,14 @@ else {
             mainMCMC.mainMCMC(argv[1 .. $], mu, n0, lingen, tMax);
         }
         else {
+            stderr.writeln("unknown subprogram: ", argv[1]);
             printHelp();
         }
     }
     
-    void readParams(string[] argv) {
+    void readParams(ref string[] argv) {
         getopt(argv, std.getopt.config.passThrough, "mu", &mu, "n0", &n0, "lingen", &lingen, "tMax", &tMax);
+        stderr.writefln("Global parameters: n0=%s, mu=%s, lingen=%s, tMax=%s", n0, mu, lingen, tMax);
     }
     
     void printHelp() {

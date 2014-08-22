@@ -2,6 +2,8 @@ debug: build/debug/rarecoal
 
 release: build/release/rarecoal
 
+all: debug release
+
 unittest: build/debug/unittest
 	build/debug/unittest
 

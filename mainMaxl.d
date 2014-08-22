@@ -7,6 +7,7 @@ import std.stdio;
 import std.range;
 import std.math;
 import std.exception;
+import std.typecons;
 import stepper;
 import coal_state;
 import model;
@@ -33,10 +34,12 @@ void mainMaxl(string[] argv, double mu, int n0, int lingen, double tMax) {
     theta = 2.0 * mu * n0;
     auto init_model = new Model(input_data.nVec, popsizeVec, joins);
     auto stepper = Stepper.make_stepper(n0, lingen, tMax);
-    auto max_model = maximize(init_model, stepper, input_data, fixedPopSize);
+    auto max_res = maximize(init_model, stepper, input_data, fixedPopSize);
+    auto max_model = max_res[0];
+    auto logl = max_res[1];
     stderr.writeln(max_model.joins);
     stderr.writeln(max_model.popsizeVec);
-    report(max_model);
+    report(max_model, logl);
 }
 
 void readParams(string[] argv) {
@@ -79,19 +82,21 @@ Options:
 
 }
 
-Model maximize(Model init_model, Stepper stepper, Data input_data, bool fixedPopSize) {
+Tuple!(Model, double) maximize(Model init_model, Stepper stepper, Data input_data, bool fixedPopSize) {
     
     auto minFunc = new MinFunc(init_model, input_data, stepper, fixedPopSize, theta);
     auto powell = new Powell!MinFunc(minFunc);
 
     auto init_params = minFunc.model_to_params(init_model);
     auto min_params = powell.minimize(init_params);
+    double logl = minFunc(min_params);
 
     auto min_model = minFunc.params_to_model(min_params);
-    return min_model;
+    return tuple(min_model, logl);
 }
 
-void report(Model model) {
+void report(Model model, double logl) {
+    writefln("Log Likelihood: %.2f", logl);
     writefln("Population sizes\t%s", model.popsizeVec.map!"text(a)"().join(","));
     foreach(j; model.joins)
         writefln("Join\t%s,%s,%s,%s", j.t, j.k, j.l, j.popsize);

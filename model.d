@@ -23,8 +23,8 @@ class Model {
         this.nVec = nVec;
         if(popsizeVec.any!(p => p < 0.001)() || joins.any!(j => j.popsize < 0.001)())
             throw new IllegalModelException("population size can't be lower than 0.001");
-        if(popsizeVec.any!(p => p > 1.0e4)() || joins.any!(j => j.popsize > 1.0e4)())
-            throw new IllegalModelException("population size can't be greater than 1.0e4");
+        if(popsizeVec.any!(p => p > 100.0)() || joins.any!(j => j.popsize > 100.0)())
+            throw new IllegalModelException("population size can't be greater than 100");
         this.initialPopSizeVec = popsizeVec;
         assert(popsizeVec.all!"a>0.0"());
         this.popsizeVec = popsizeVec.dup;
