@@ -1,6 +1,3 @@
-import stepper;
-import coal_state;
-import model;
 import std.getopt;
 import std.string;
 import std.algorithm;
@@ -10,12 +7,15 @@ import std.stdio;
 import std.range;
 import std.math;
 import std.exception;
+import stepper;
+import coal_state;
+import model;
+import params;
 
 int[] nVec, mVec;
-double[] popsizeVec;
-Join_t[] joins;
+Params_t p;
 
-void mainProb(string[] argv, double mu, int n0, int lingen, double tMax) {
+void mainProb(string[] argv, Params_t params_) {
     
     try {
         readParams(argv);
@@ -24,43 +24,25 @@ void mainProb(string[] argv, double mu, int n0, int lingen, double tMax) {
         printHelp(e);
         return;
     }
-    auto model = new Model(nVec, popsizeVec, joins);
+    p = params_;
+    auto model = new Model(nVec, p.popsizeVec, p.joins);
     auto state = new CoalState(model, mVec);
     auto m = mVec.reduce!"a+b"();
-    auto stepper = Stepper.make_stepper(n0, lingen, tMax);
+    auto stepper = Stepper.make_stepper(p.n0, p.lingen, p.tMax);
     auto factor = zip(nVec, mVec).map!(x => binom(x[0], x[1])).reduce!"a*b"();
     stepper.run(state);
-    auto theta = 2.0 * n0 * mu;
+    auto theta = 2.0 * p.n0 * p.mu;
     auto result = m ? theta * factor * state.d : exp(-theta * state.e);
     writeln(result);
 
 }
 
 void readParams(string[] argv) {
-    void handleJoins(string option, string str) {
-        auto fields = str.split(",");
-        auto t = fields[0].to!double();
-        auto k = fields[1].to!int();
-        auto l = fields[2].to!int();
-        auto popsize = fields[3].to!double();
-        joins ~= Join_t(t, k, l, popsize);
-    }
-    
-    void handlePopsize(string option, string str) {
-        popsizeVec = str.split(",").map!"a.to!double()"().array();
-    }
-    
-    getopt(argv, std.getopt.config.caseSensitive, "join|j", &handleJoins, "popsize|p", &handlePopsize);
-
     enforce(argv.length == 3, "need more arguments");
     nVec = argv[1].split(",").map!"a.to!int()"().array();
     mVec = argv[2].split(",").map!"a.to!int()"().array();
-    if(popsizeVec.length == 0) {
-        popsizeVec = new double[nVec.length];
-        popsizeVec[] = 1.0;
-    }
     
-    enforce(nVec.length == mVec.length && nVec.length == popsizeVec.length);
+    enforce(nVec.length == mVec.length && nVec.length == p.popsizeVec.length);
 }
 
 void printHelp(Exception e) {

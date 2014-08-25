@@ -15,15 +15,15 @@ import data;
 import logl;
 import powell;
 import minfunc;
+import params;
 
 Data input_data;
-Join_t[] joins;
-double[] popsizeVec;
 bool fixedPopSize = false;
 int max_af = 10;
 double theta;
+Params_t p;
 
-void mainMaxl(string[] argv, double mu, int n0, int lingen, double tMax) {
+void mainMaxl(string[] argv, Params_t params_) {
     try {
         readParams(argv);
     }
@@ -31,9 +31,10 @@ void mainMaxl(string[] argv, double mu, int n0, int lingen, double tMax) {
         printHelp(e);
         return;
     }
-    theta = 2.0 * mu * n0;
-    auto init_model = new Model(input_data.nVec, popsizeVec, joins);
-    auto stepper = Stepper.make_stepper(n0, lingen, tMax);
+    p = params_;
+    theta = 2.0 * p.mu * n0;
+    auto init_model = new Model(input_data.nVec, p.popsizeVec, p.joins);
+    auto stepper = Stepper.make_stepper(p.n0, p.lingen, p.tMax);
     auto max_res = maximize(init_model, stepper, input_data, fixedPopSize);
     auto max_model = max_res[0];
     auto logl = max_res[1];
@@ -43,32 +44,13 @@ void mainMaxl(string[] argv, double mu, int n0, int lingen, double tMax) {
 }
 
 void readParams(string[] argv) {
-    void handleJoins(string option, string str) {
-        auto fields = str.split(",");
-        auto t = fields[0].to!double();
-        auto k = fields[1].to!int();
-        auto l = fields[2].to!int();
-        auto popsize = fields[3].to!double();
-        joins ~= Join_t(t, k, l, popsize);
-    }
-    
-    void handlePopsize(string option, string str) {
-        popsizeVec = str.split(",").map!"a.to!double()"().array();
-    }
-    
     getopt(argv, std.getopt.config.caseSensitive,
-           "join|j"        , &handleJoins,
-           "popsize|p"     , &handlePopsize,
            "fixedPopSize|f", &fixedPopSize,
            "max_af|m"      , &max_af);
     
     enforce(argv.length == 2, "need more arguments");
     input_data = new Data(argv[1], max_af);
-    if(popsizeVec.length == 0) {
-        popsizeVec = new double[input_data.nVec.length];
-        popsizeVec[] = 1.0;
-    }
-    enforce(popsizeVec.length == input_data.nVec.length);
+    enforce(p.popsizeVec.length == input_data.nVec.length);
 }
 
 void printHelp(Exception e) {
