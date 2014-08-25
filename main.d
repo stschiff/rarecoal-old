@@ -8,6 +8,7 @@ import mainProb;
 import mainLogl;
 import mainMaxl;
 import mainMCMC;
+import mainFindsplit;
 import model;
 import params;
 
@@ -46,6 +47,9 @@ else {
         }
         else if(argv[1] == "mcmc") {
             mainMCMC.mainMCMC(argv[1 .. $], p);
+        }
+        else if(argv[1] == "findsplit") {
+            mainFindsplit.mainFindsplit(argv[1 .. $], p);
         }
         else {
             stderr.writeln("unknown subprogram: ", argv[1]);
@@ -100,6 +104,7 @@ Subprograms:
         logl         compute the likelihood of a whole data set given parameters
         maxl         find maximum likelihood parameters for a given data set
         mcmc         Monte Carlo Markov Chain on parameters
+        findsplit    Systematically evaluate likelihood of adding a new branch anywhere on an existing tree
 ");
     }
 }

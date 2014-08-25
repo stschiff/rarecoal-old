@@ -37,6 +37,12 @@ void mainMCMC(string[] argv, Params_t params_) {
     }
     p = params_;
     theta = 2.0 * p.mu * p.n0;
+    if(p.popsizeVec.length == 0) {
+        p.popsizeVec = new double[input_data.nVec.length];
+        p.popsizeVec[] = 1.0;
+    }
+    enforce(p.popsizeVec.length == input_data.nVec.length);
+
     auto init_model = new Model(input_data.nVec, p.popsizeVec, p.joins);
     auto stepper = Stepper.make_stepper(p.n0, p.lingen, p.tMax);
     auto minFunc = new MinFunc(init_model, input_data, stepper, fixedPopSize, theta);
@@ -59,7 +65,6 @@ void readParams(string[] argv) {
     
     enforce(argv.length == 2, "need more arguments");
     input_data = new Data(argv[1], max_af);
-    enforce(p.popsizeVec.length == input_data.nVec.length);
 }
 
 void printHelp(Exception e) {

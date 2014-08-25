@@ -41,7 +41,10 @@ void readParams(string[] argv) {
     enforce(argv.length == 3, "need more arguments");
     nVec = argv[1].split(",").map!"a.to!int()"().array();
     mVec = argv[2].split(",").map!"a.to!int()"().array();
-    
+    if(p.popsizeVec.length == 0) {
+        p.popsizeVec = new double[nVec.length];
+        p.popsizeVec[] = 1.0;
+    }
     enforce(nVec.length == mVec.length && nVec.length == p.popsizeVec.length);
 }
 

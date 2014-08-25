@@ -29,6 +29,11 @@ void mainLogl(string[] argv, Params_t params_) {
         return;
     }
     p = params_;
+    if(p.popsizeVec.length == 0) {
+        p.popsizeVec = new double[input_data.nVec.length];
+        p.popsizeVec[] = 1.0;
+    }
+    enforce(p.popsizeVec.length == input_data.nVec.length);
     auto model = new Model(input_data.nVec, p.popsizeVec, p.joins);
     auto stepper = Stepper.make_stepper(p.n0, p.lingen, p.tMax);
     auto logl = totalLikelihood(model, input_data, stepper, p.mu * 2.0 * p.n0);

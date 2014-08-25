@@ -32,7 +32,12 @@ void mainMaxl(string[] argv, Params_t params_) {
         return;
     }
     p = params_;
-    theta = 2.0 * p.mu * n0;
+    theta = 2.0 * p.mu * p.n0;
+    if(p.popsizeVec.length == 0) {
+        p.popsizeVec = new double[input_data.nVec.length];
+        p.popsizeVec[] = 1.0;
+    }
+    enforce(p.popsizeVec.length == input_data.nVec.length);
     auto init_model = new Model(input_data.nVec, p.popsizeVec, p.joins);
     auto stepper = Stepper.make_stepper(p.n0, p.lingen, p.tMax);
     auto max_res = maximize(init_model, stepper, input_data, fixedPopSize);
@@ -50,7 +55,6 @@ void readParams(string[] argv) {
     
     enforce(argv.length == 2, "need more arguments");
     input_data = new Data(argv[1], max_af);
-    enforce(p.popsizeVec.length == input_data.nVec.length);
 }
 
 void printHelp(Exception e) {
@@ -61,7 +65,6 @@ Options:
     --popsize, -p <p1,p2,...>   initial population sizes
     --fixedPopSize, -f  keep population sizes fixed during maximization
     --max_af, -m        maximum allele frequency to use [10]");
-
 }
 
 Tuple!(Model, double) maximize(Model init_model, Stepper stepper, Data input_data, bool fixedPopSize) {
