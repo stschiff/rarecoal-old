@@ -99,7 +99,7 @@ class Powell(T) : Linemethod!T {
     for(int j=0;j<n;j++) pt[j]=p[j];
     for(iter=0;;++iter) {
       double fp=fret;
-      stderr.writefln("[%s/%s(max)] Maximization Step, params=%s, p=%s", iter, ITMAX, p, fp);
+      stderr.writefln("[%s/%s(max)] Maximization Step, params=%s, p=%.2f", iter, ITMAX, p, fp);
       int ibig=0;
       double del=0.0;
       for(int i=0;i<n;i++) {

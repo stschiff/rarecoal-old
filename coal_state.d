@@ -102,7 +102,7 @@ class CoalState {
     
     void perform_join(int k, int l) {
         if(a[l] == 0)
-            throw new IllegalModelException(format("merge (%s=>%s) at time %s: empty source population: %s", l, k, t, a[l]));
+            throw new IllegalModelException(format("merge (%s=>%s) at time %s: empty source population", l, k, t));
         if(a[k] == 0)
             throw new IllegalModelException(format("merge (%s=>%s) at time %s: empty target population", l, k, t));
         a[k] += a[l];

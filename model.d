@@ -17,6 +17,7 @@ class Model {
     const double[] initialPopSizeVec;
     double[] popsizeVec;
     const Join_t[] joins;
+    const Join_t[] sorted_joins;
     int joins_index;
     
     this(in int[] nVec, in double[] popsizeVec, in Join_t[] joins=[]) {
@@ -29,7 +30,9 @@ class Model {
         assert(popsizeVec.all!"a>0.0"());
         this.popsizeVec = popsizeVec.dup;
         assert(joins.all!"a.t>0.0 && a.popsize>0.0"());
-        this.joins = joins.dup.sort!"a.t < b.t"().array();
+        assert(joins.all!"a.k!=a.l"());
+        this.joins = joins;
+        this.sorted_joins = joins.dup.sort!"a.t < b.t"().array();
         this.joins_index = 0;
     }
     
@@ -46,16 +49,16 @@ class Model {
     }
     
     Join_t next_join() {
-        if(joins_index >= joins.length) {
+        if(joins_index >= sorted_joins.length) {
             auto ret = Join_t();
             ret.t = double.infinity;
             return ret;
         }
-        return joins[joins_index];
+        return sorted_joins[joins_index];
     }
     
     void join_done() {
-        auto j = joins[joins_index];
+        auto j = sorted_joins[joins_index];
         popsizeVec[j.k] = j.popsize;
         joins_index += 1;
     }

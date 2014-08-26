@@ -55,7 +55,8 @@ void printHelp(Exception e) {
     writeln(e.msg);
     writeln("./rarecoal prob [OPTIONS] <input_file>
 Options:
-    --max_af, -m                maximum allele frequency to use [10]");
+    --max_af, -m                maximum allele frequency to use [10]
+    --spectrumfile, -s          file to write the spectrum to");
 }
 
 void writeSpectrum(Model model, in Data input_dat, in Stepper stepper, double theta, string spectrumfile)
