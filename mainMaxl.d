@@ -44,7 +44,7 @@ void mainMaxl(string[] argv, Params_t params_) {
     auto max_model = max_res[0];
     auto logl = max_res[1];
     stderr.writeln(max_model.joins);
-    stderr.writeln(max_model.popsizeVec);
+    stderr.writeln(max_model.popSizeVec);
     report(max_model, logl);
 }
 
@@ -82,11 +82,11 @@ Tuple!(Model, double) maximize(Model init_model, Stepper stepper, Data input_dat
 
 void report(Model model, double logl) {
     writefln("Log Likelihood: %.2f", logl);
-    writefln("Population sizes\t%s", model.popsizeVec.map!"text(a)"().join(","));
+    writefln("Population sizes\t%s", model.popSizeVec.map!"text(a)"().join(","));
     foreach(j; model.joins)
         writefln("Join\t%s,%s,%s,%s", j.t, j.k, j.l, j.popsize);
     char[] cmdopt;
-    cmdopt ~= format("-p %s", model.popsizeVec.map!"text(a)"().join(","));
+    cmdopt ~= format("-p %s", model.popSizeVec.map!"text(a)"().join(","));
     foreach(j; model.joins)
         cmdopt ~= format(" -j %s,%s,%s,%s", j.t, j.k, j.l, j.popsize);
     writefln("command line options\t%s", cmdopt);

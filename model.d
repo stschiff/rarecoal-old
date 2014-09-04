@@ -14,11 +14,8 @@ class IllegalModelException : Exception {
 
 class Model {
     const int[] nVec;
-    const double[] initialPopSizeVec;
-    double[] popsizeVec;
+    const double[] popSizeVec;
     const Join_t[] joins;
-    const Join_t[] sorted_joins;
-    int joins_index;
     
     this(in int[] nVec, in double[] popsizeVec, in Join_t[] joins=[]) {
         this.nVec = nVec;
@@ -26,14 +23,11 @@ class Model {
             throw new IllegalModelException("population size can't be lower than 0.001");
         if(popsizeVec.any!(p => p > 100.0)() || joins.any!(j => j.popsize > 100.0)())
             throw new IllegalModelException("population size can't be greater than 100");
-        this.initialPopSizeVec = popsizeVec;
+        this.popSizeVec = popsizeVec;
         assert(popsizeVec.all!"a>0.0"());
-        this.popsizeVec = popsizeVec.dup;
         assert(joins.all!"a.t>0.0 && a.popsize>0.0"());
         assert(joins.all!"a.k!=a.l"());
         this.joins = joins;
-        this.sorted_joins = joins.dup.sort!"a.t < b.t"().array();
-        this.joins_index = 0;
     }
     
     @property int P() const {
@@ -41,11 +35,22 @@ class Model {
     }
     
     override string toString() const {
-        return format("Model {popsizeVec=%s, joins=%s}", popsizeVec, joins);
+        return format("Model {popsizeVec=%s, joins=%s}", popSizeVec, joins);
     }
     
-    double coal_rate(int k) {
-        return 1.0 / popsizeVec[k];
+}
+ 
+class ModelState {
+    const Model model;
+    const Join_t[] sorted_joins;
+    double[] popsizeVec;
+    int joins_index;
+    
+    this(in Model model) {
+        this.model = model;
+        this.sorted_joins = model.joins.dup.sort!"a.t < b.t"().array();
+        this.popsizeVec = model.popSizeVec.dup;
+        this.joins_index = 0;
     }
     
     Join_t next_join() {
@@ -63,9 +68,8 @@ class Model {
         joins_index += 1;
     }
     
-    void reset() {
-        joins_index = 0;
-        popsizeVec = initialPopSizeVec.dup;
+    double coal_rate(int k) {
+        return 1.0 / popsizeVec[k];
     }
 }
 
@@ -74,11 +78,12 @@ unittest {
     auto joins = [Join_t(0.1, 0, 1, 0.5), Join_t(0.2, 0, 2, 2.0)];
     auto m = new Model(nVec, [1.0, 1.0, 1.0], joins);
     assert(m.P == 3);
-    assert(m.next_join() == Join_t(0.1, 0, 1, 0.5));
-    m.join_done();
-    assert(m.popsizeVec[0] == 0.5);
-    assert(m.next_join() == Join_t(0.2, 0, 2, 2.0));
-    m.join_done();
-    assert(m.popsizeVec[0] == 2.0);
-    assert(m.next_join().t == double.infinity);
+    auto ms = new ModelState(m);
+    assert(ms.next_join() == Join_t(0.1, 0, 1, 0.5));
+    ms.join_done();
+    assert(ms.popsizeVec[0] == 0.5);
+    assert(ms.next_join() == Join_t(0.2, 0, 2, 2.0));
+    ms.join_done();
+    assert(ms.popsizeVec[0] == 2.0);
+    assert(ms.next_join().t == double.infinity);
 }

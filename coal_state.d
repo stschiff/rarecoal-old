@@ -15,19 +15,21 @@ double approx_exp(double arg) {
 }
 
 class CoalState {
-    Model model;
+    const Model model;
+    ModelState modelState;
     int[] max_m;
     int m;
     double[] a, a_buf;
     double[][] b, b_buf;
     double d, e, t;
     
-    this(Model model, in int[] init)
+    this(in Model model, in int[] init)
     in {
         assert(model.P == init.length);
     }
     body {
         this.model = model;
+        this.modelState = new ModelState(model);
         max_m = init.dup;
         m = max_m.reduce!"a+b"();
         a = zip(model.nVec, init).map!"to!double(a[0] - a[1])"().array();
@@ -50,12 +52,12 @@ class CoalState {
         assert(new_t > t);
     }
     body {
-        while(new_t > model.next_join().t) {
-            auto jn = model.next_join();
+        while(new_t > modelState.next_join().t) {
+            auto jn = modelState.next_join();
             auto t_delta = jn.t - t;
             update_all(t_delta);
             perform_join(jn.k, jn.l);
-            model.join_done();
+            modelState.join_done();
             t = jn.t;
         }
         auto t_delta = new_t - t;
@@ -74,14 +76,14 @@ class CoalState {
     
     void update_a(double t_delta) {
         foreach(int k, aa; a) {
-            auto lambda_ = model.coal_rate(k);
+            auto lambda_ = modelState.coal_rate(k);
             a_buf[k] = aa * approx_exp(-(aa - 1.0) / 2.0 * lambda_ * t_delta);
         }
     }
     
     void update_b(double t_delta) {
         foreach(k; 0 .. model.P) {
-            auto lambda_ = model.coal_rate(k);
+            auto lambda_ = modelState.coal_rate(k);
             b_buf[k][] = 0.0;
             foreach(i; 0 .. max_m[k] + 1) {
                 b_buf[k][i] = b[k][i] * approx_exp(-(i * (i - 1.0) / 2.0 + i * a[k]) * lambda_ * t_delta);
@@ -146,7 +148,6 @@ unittest {
     assert(cs.b[1][2] == 0.0);
     assert(cs.b[0][3] == 1.0);
     
-    m.reset();
     cs = new CoalState(m, [1, 2, 0]);
     assert(cs.a == [499, 498, 500]);
     assert(cs.b[0][1] == 1.0);

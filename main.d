@@ -3,6 +3,7 @@ import std.getopt;
 import std.string;
 import std.conv;
 import std.algorithm;
+import std.parallelism;
 import std.array;
 import mainProb;
 import mainLogl;
@@ -13,6 +14,7 @@ import model;
 import params;
 
 Params_t p;
+uint nrThreads;
 
 version(unittest) {
     void main() {
@@ -85,7 +87,12 @@ else {
             "lingen"    , &p.lingen,
             "tMax"      , &p.tMax,
             "join|j"    , &handleJoins,
-            "popsize|p" , &handlePopsize);
+            "popsize|p" , &handlePopsize,
+            "nrThreads" , &nrThreads);
+
+        if(nrThreads)
+          std.parallelism.defaultPoolThreads(nrThreads);
+
     }
     
     void printHelp() {
@@ -98,6 +105,7 @@ Options:
         --tMax                        maximum time to which to run, in 2n0 generations [20.0]
         --join, -j <t,k,l,popsize=1>  add a join at time t from population l to k, optionally setting the new popsize 
         --popsize, -p <p1,p2,...>     initial population sizes
+        --nrThreads                   nr of Threads to use, default: nr of CPUs
 
 Subprograms:        
         prob         compute the probability of a single configuration of derived alleles

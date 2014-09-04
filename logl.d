@@ -2,12 +2,13 @@ import std.conv;
 import std.algorithm;
 import std.range;
 import std.math;
+import std.parallelism;
 import model;
 import data;
 import coal_state;
 import stepper;
 
-double totalLikelihood(Model model, in Data input_dat, in Stepper stepper, double theta)
+double totalLikelihood(in Model model, in Data input_dat, in Stepper stepper, double theta)
 in {
     assert(model.nVec == input_dat.nVec);
 }
@@ -16,10 +17,10 @@ body {
     auto log_l = 0.0;
     auto m = input_dat.max_m;
     auto hom_type = (new int[model.nVec.length]).idup;
-    foreach(order; input_dat.standardOrder) {
+    // foreach(order; input_dat.standardOrder) {
+    foreach(order; taskPool.parallel(input_dat.standardOrder)) {
         if(order == hom_type)
             continue;
-        model.reset();
         auto state = new CoalState(model, order);
         auto f = order.reduce!"a+b"();
         auto factor = zip(input_dat.nVec, order).map!(x => binom(x[0], x[1])).reduce!"a*b"();

@@ -69,7 +69,6 @@ body {
     foreach(key, count; input_dat.counts) {
         if(key.reduce!"a+b"() == 0)
             continue;
-        model.reset();
         auto state = new CoalState(model, key);
         auto factor = zip(input_dat.nVec, key).map!(x => binom(x[0], x[1])).reduce!"a*b"();
         stepper.run(state);

@@ -21,7 +21,7 @@ class MinFunc {
         this.stepper_ = stepper_;
         this.fixedPopSize = fixedPopSize;
         this.theta = theta;
-        totalLikelihood(new Model(init_model.nVec, init_model.popsizeVec, init_model.joins), input_data, stepper_, theta); // this just serves to check for any exceptions with the initial model
+        totalLikelihood(new Model(init_model.nVec, init_model.popSizeVec, init_model.joins), input_data, stepper_, theta); // this just serves to check for any exceptions with the initial model
     }
     
     double opCall(double[] params)
@@ -70,7 +70,7 @@ class MinFunc {
     body {
         auto joins = init_model.joins.dup;
         auto nj = joins.length;
-        auto popsizeVec = init_model.popsizeVec.dup;
+        auto popsizeVec = init_model.popSizeVec.dup;
         auto K = init_model.P;
         foreach(i, p; params[0 .. nj])
             joins[i].t = p;
@@ -87,7 +87,7 @@ class MinFunc {
     double[] model_to_params(in Model model) {
         auto ret = model.joins.map!(j => j.t.to!double())().array();
         if(!fixedPopSize) {
-            ret ~= model.popsizeVec.dup;
+            ret ~= model.popSizeVec.dup;
             ret ~= model.joins.map!(j => j.popsize.to!double())().array();
         }
         return ret;
