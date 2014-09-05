@@ -24,7 +24,7 @@ class MinFunc {
         totalLikelihood(new Model(init_model.nVec, init_model.popSizeVec, init_model.joins), input_data, stepper_, theta); // this just serves to check for any exceptions with the initial model
     }
     
-    double opCall(double[] params)
+    double opCall(in double[] params)
     {
         if(invalid(params))
             return penalty;

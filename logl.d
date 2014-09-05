@@ -17,8 +17,8 @@ body {
     auto log_l = 0.0;
     auto m = input_dat.max_m;
     auto hom_type = (new int[model.nVec.length]).idup;
-    // foreach(order; input_dat.standardOrder) {
-    foreach(order; taskPool.parallel(input_dat.standardOrder)) {
+    foreach(order; input_dat.standardOrder) {
+    // foreach(order; taskPool.parallel(input_dat.standardOrder)) {
         if(order == hom_type)
             continue;
         auto state = new CoalState(model, order);

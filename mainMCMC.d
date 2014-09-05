@@ -49,10 +49,9 @@ void mainMCMC(string[] argv, Params_t params_) {
     auto init_params = minFunc.model_to_params(init_model);
     burnin_steps = burnin_cycles * minFunc.nrParams;
     main_steps = main_cycles * minFunc.nrParams;
-    auto mcmc = new MCMC!MinFunc(minFunc, init_params);
+    auto mcmc = new MCMC!MinFunc(minFunc, init_params, tracefile);
     mcmc.run(burnin_steps + main_steps);
     reportMain(mcmc);
-    reportTraces(mcmc, tracefile);
 }
 
 void readParams(string[] argv) {
@@ -94,15 +93,4 @@ void reportMain(MCMC!MinFunc mcmc) {
         auto ci_higher = singleTrace.sort().dropBack(to!int(main_steps * 0.025)).back();
         writefln("%s\t%s\t%s", median, ci_lower, ci_higher);
     }
-}
-
-void reportTraces(MCMC!MinFunc mcmc, string tracefile) {
-    auto f = File(tracefile, "w");
-    f.write(mcmc.minfunc.paramNames().join("\t"));
-    f.writeln("\tscore");
-    foreach(i, point; mcmc.trace) {
-        f.write(point.map!"text(a)"().join("\t"));
-        f.writefln("\t%20.2f", mcmc.fvalues[i]);
-    }
-    f.close();
 }
