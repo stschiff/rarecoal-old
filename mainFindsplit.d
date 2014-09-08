@@ -47,8 +47,8 @@ void mainFindsplit(string[] argv, Params_t params_) {
                     minT = t;
                     minLogL = logl_;
                 }
-                evalFile.writefln("%s\t%s\t%s", k, t, logl_);
-                stderr.writefln("%s\t%s\t%s", k, t, logl_);
+                evalFile.writefln("%s\t%s\t%.2f", k, t, logl_);
+                stderr.writefln("%s\t%s\t%.2f", k, t, logl_);
             }
             catch (IllegalModelException e) {
                 stderr.writeln(e.msg);
@@ -58,7 +58,7 @@ void mainFindsplit(string[] argv, Params_t params_) {
     }
     writefln("branch:\t%s", minK);
     writefln("time:\t%s", minT);
-    writefln("logL:\t%s", minLogL);
+    writefln("logL:\t%.2f", minLogL);
 }
 
 void readParams(string[] argv) {
