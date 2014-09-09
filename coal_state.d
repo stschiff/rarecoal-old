@@ -5,6 +5,7 @@ import std.conv;
 import std.stdio;
 import std.string;
 import std.math;
+import std.exception;
 import model;
 
 double approx_exp(double arg) {
@@ -33,6 +34,7 @@ class CoalState {
         max_m = init.dup;
         m = max_m.reduce!"a+b"();
         a = zip(model.nVec, init).map!"to!double(a[0] - a[1])"().array();
+        enforce(a.all!"a>=0.0"(), "nr of derived alleles exceeds haplotypes");
         a_buf = new double[model.P];
         b = new double[][](model.P, m + 1);
         b_buf = new double[][](model.P, m + 1);
@@ -103,9 +105,9 @@ class CoalState {
     }
     
     void perform_join(int k, int l) {
-        if(a[l] == 0)
+        if(a[l] + b[l][1..$].reduce!"a+b"() == 0)
             throw new IllegalModelException(format("merge (%s=>%s) at time %s: empty source population", l, k, t));
-        if(a[k] == 0)
+        if(a[k] + b[k][1..$].reduce!"a+b"() == 0)
             throw new IllegalModelException(format("merge (%s=>%s) at time %s: empty target population", l, k, t));
         a[k] += a[l];
         a[l] = 0.0;

@@ -21,6 +21,8 @@ body {
     // foreach(order; taskPool.parallel(input_dat.standardOrder)) {
         if(order == hom_type)
             continue;
+        if(zip(order, model.nVec).any!"a[0] > a[1]"())
+            continue;
         auto state = new CoalState(model, order);
         auto f = order.reduce!"a+b"();
         auto factor = zip(input_dat.nVec, order).map!(x => binom(x[0], x[1])).reduce!"a*b"();
