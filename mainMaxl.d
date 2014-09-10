@@ -44,6 +44,7 @@ void mainMaxl(string[] argv, Params_t params_) {
     auto max_model = max_res[0];
     auto logl = max_res[1];
     stderr.writeln(max_model.joins);
+    stderr.writeln(max_model.migrations);
     stderr.writeln(max_model.popSizeVec);
     report(max_model, logl);
 }
@@ -85,10 +86,14 @@ void report(Model model, double logl) {
     writefln("Population sizes\t%s", model.popSizeVec.map!"text(a)"().join(","));
     foreach(j; model.joins)
         writefln("Join\t%s,%s,%s,%s", j.t, j.k, j.l, j.popsize);
+    foreach(m; model.migrations)
+        writefln("Migration\t%s,%s,%s", m.k, m.l, m.r);
     char[] cmdopt;
     cmdopt ~= format("-p %s", model.popSizeVec.map!"text(a)"().join(","));
     foreach(j; model.joins)
         cmdopt ~= format(" -j %s,%s,%s,%s", j.t, j.k, j.l, j.popsize);
+    foreach(m; model.migrations)
+        cmdopt ~= format(" -g %s,%s,%s", m.k, m.l, m.r);
     writefln("command line options\t%s", cmdopt);
 }
 
