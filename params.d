@@ -9,4 +9,6 @@ struct Params_t {
     Migration_t[] migrations;
     double[] popsizeVec;
     double[] leaf_times;
+    int minFreq;
+    int[][] exclude_list;
 }

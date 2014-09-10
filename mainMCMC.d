@@ -45,7 +45,7 @@ void mainMCMC(string[] argv, Params_t params_) {
 
     auto init_model = new Model(input_data.nVec, p.popsizeVec, p.joins, p.migrations);
     auto stepper = Stepper.make_stepper(p.n0, p.lingen, p.tMax);
-    auto minFunc = new MinFunc(init_model, input_data, stepper, fixedPopSize, theta, -1);
+    auto minFunc = new MinFunc(init_model, input_data, stepper, fixedPopSize, theta, -1, p.minFreq, p.exclude_list);
     auto init_params = minFunc.model_to_params(init_model);
     burnin_steps = burnin_cycles * minFunc.nrParams;
     main_steps = main_cycles * minFunc.nrParams;

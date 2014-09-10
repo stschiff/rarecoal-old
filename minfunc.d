@@ -15,16 +15,20 @@ class MinFunc {
     bool fixedPopSize;
     double theta;
     int singleJoin;
+    int minFreq;
+    const int[][] exclude_list;
 
-    this(in Model init_model, in Data input_data, in Stepper stepper_, bool fixedPopSize, double theta, int singleJoin) {
+    this(in Model init_model, in Data input_data, in Stepper stepper_, bool fixedPopSize, double theta, int singleJoin,
+         int minFreq, in int[][] exclude_list) {
         this.init_model = init_model;
         this.input_data = input_data;
         this.stepper_ = stepper_;
         this.fixedPopSize = fixedPopSize;
         this.theta = theta;
         this.singleJoin = singleJoin;
+        this.exclude_list = exclude_list;
         // totalLikelihood(new Model(init_model.nVec, init_model.popSizeVec, init_model.joins), input_data, stepper_, theta); // this just serves to check for any exceptions with the initial model
-        totalLikelihood(init_model, input_data, stepper_, theta);
+        totalLikelihood(init_model, input_data, stepper_, theta, minFreq, exclude_list);
     }
     
     double opCall(in double[] params)
@@ -34,7 +38,7 @@ class MinFunc {
         double l;
         try {
             auto new_model = params_to_model(params);
-            l = totalLikelihood(new_model, input_data, stepper_, theta);
+            l = totalLikelihood(new_model, input_data, stepper_, theta, minFreq, exclude_list);
         }
         catch(IllegalModelException e) {
             return penalty;

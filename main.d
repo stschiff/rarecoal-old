@@ -87,6 +87,10 @@ else {
             p.popsizeVec = str.split(",").map!"a.to!double()"().array();
         }
         
+        void handleExcludes(string option, string str) {
+            p.exclude_list = str.split(";").map!(w => w.split(",").map!"a.to!int()"().array()).array();
+        }
+        
         p = Params_t();
         p.mu = 1.25e-8;
         p.n0 = 20000;
@@ -102,6 +106,8 @@ else {
             "migration|g" , &handleMigrations,
             "leaf_times"  , &handleLeafTimes,
             "popsize|p"   , &handlePopsize,
+            "minFreq"     , &p.minFreq,
+            "exclude"     , &handleExcludes,
             "nrThreads"   , &nrThreads);
 
         if(nrThreads)
@@ -121,6 +127,8 @@ Options:
         --migration, -g <k, l, rate>  add a bi-directional migration rate between branch k and l (up to the first coalescence)
         --leaf_times <t1,t2,t3...>    for ancient samples choose t > 0.                   
         --popsize, -p <p1,p2,...>     initial population sizes
+        --minFreq                     minimum frequency to evaluate
+        --exclude                     exclude these patterns (semicolon-separated patterns of comma-separated patters)
         --nrThreads                   nr of Threads to use, default: nr of CPUs
 
 Subprograms:        

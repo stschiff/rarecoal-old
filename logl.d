@@ -8,7 +8,8 @@ import data;
 import coal_state;
 import stepper;
 
-double totalLikelihood(in Model model, in Data input_dat, in Stepper stepper, double theta)
+double totalLikelihood(in Model model, in Data input_dat, in Stepper stepper, double theta, int min_freq=1,
+                       in int[][] exclude_list=[])
 in {
     assert(model.nVec == input_dat.nVec);
 }
@@ -19,7 +20,7 @@ body {
     auto other = 0;
     foreach(order; input_dat.standardOrder) {
         auto f = order.reduce!"a+b"();
-        if(f < 3) {
+        if(f < min_freq || exclude_list.canFind(order)) {
             other += order in input_dat.counts ? input_dat.counts[order] : 0;
             continue;
         }

@@ -71,7 +71,8 @@ Options:
 
 Tuple!(Model, double) maximize(Model init_model, Stepper stepper, Data input_data, bool fixedPopSize, int singleJoin) {
     
-    auto minFunc = new MinFunc(init_model, input_data, stepper, fixedPopSize, theta, singleJoin);
+    auto minFunc = new MinFunc(init_model, input_data, stepper, fixedPopSize, theta, singleJoin,
+                               p.minFreq, p.exclude_list);
     auto powell = new Powell!MinFunc(minFunc);
 
     auto init_params = minFunc.model_to_params(init_model);
