@@ -66,7 +66,6 @@ else {
             auto l = fields[1].to!int();
             auto r = fields[2].to!double();
             p.migrations ~= Migration_t(k, l, r);
-            p.migrations ~= Migration_t(l, k, r);
         }
 
         void handleJoins(string option, string str) {

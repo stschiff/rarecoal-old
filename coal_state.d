@@ -69,8 +69,10 @@ class CoalState {
     void update_all(double t_delta) {
         update_a(t_delta);
         update_b(t_delta);
-        foreach(mig; modelState.migrations)
-            perform_migration(mig, t_delta);
+        foreach(mig; modelState.migrations) {
+            perform_migration(mig.k, mig.l, mig.r, t_delta);
+            perform_migration(mig.l, mig.k, mig.r, t_delta);
+        }
     }
     
     void update_a(double t_delta) {
@@ -133,33 +135,33 @@ class CoalState {
         return ret;
     }
     
-    void perform_migration(Migration_t mig, double t_delta) {
-        if(empty(mig.k) || empty(mig.l) || mig.r == 0)
+    void perform_migration(int k, int l, double r, double t_delta) {
+        if(empty(k) || empty(l) || r == 0)
             return;
         //print "before migration, b={}".format(self.b)
-        auto new_ak = a[mig.k] + a[mig.l] * (1.0 - exp(-mig.r * t_delta));
-        auto new_al = a[mig.l] * exp(-mig.r * t_delta);
-        a[mig.k] = new_ak;
-        a[mig.l] = new_al;
+        auto new_ak = a[k] + a[l] * (1.0 - exp(-r * t_delta));
+        auto new_al = a[l] * exp(-r * t_delta);
+        a[k] = new_ak;
+        a[l] = new_al;
         double[] new_bkiVec;
         double[] new_bliVec;
         foreach(i; 0 .. m + 1) {
-            auto tot_rate = iota(1, max_m[mig.l] + 1).map!(j => b[mig.l][j] * j * mig.r * t_delta)().reduce!"a+b"();
-            auto new_bki = b[mig.k][i] * exp(-tot_rate);
+            auto tot_rate = reduce!"a+b"(0.0, iota(1, max_m[l] + 1).map!(j => b[l][j] * j * r * t_delta)());
+            auto new_bki = b[k][i] * exp(-tot_rate);
             if(i > 0)
-                new_bki += b[mig.k][i - 1] * (1.0 - exp(-tot_rate));
-            auto new_bli = b[mig.l][i] * exp(-i * mig.r * t_delta);
-            if(i < max_m[mig.l])
-                new_bli += b[mig.l][i + 1] * (1.0 - exp(-(i + 1) * mig.r * t_delta));
+                new_bki += b[k][i - 1] * (1.0 - exp(-tot_rate));
+            auto new_bli = b[l][i] * exp(-i * r * t_delta);
+            if(i < max_m[l])
+                new_bli += b[l][i + 1] * (1.0 - exp(-(i + 1) * r * t_delta));
             new_bkiVec ~= new_bki;
             new_bliVec ~= new_bli;
         }
         
-        b[mig.k] = new_bkiVec;
-        b[mig.l] = new_bliVec;
+        b[k] = new_bkiVec;
+        b[l] = new_bliVec;
         // print "after migration, b={}".format(self.b)
-        auto new_max_m = min(m, max_m[mig.k] + max_m[mig.l]);
-        max_m[mig.k] = new_max_m;
+        auto new_max_m = min(m, max_m[k] + max_m[l]);
+        max_m[k] = new_max_m;
     }
 }
 

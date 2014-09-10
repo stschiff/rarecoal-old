@@ -40,13 +40,17 @@ class MinFunc {
     }
     
     @property int nrParams() {
-        return fixedPopSize ? to!int(init_model.joins.length) : 2 * to!int(init_model.joins.length) + init_model.P;
+        auto nrJoins = init_model.joins.length.to!int();
+        auto nrMigs = init_model.migrations.length.to!int();
+        return fixedPopSize ? nrJoins + nrMigs : 2 * nrJoins + nrMigs + init_model.P;
     }
     
     string[] paramNames() {
         string[] ret;
         foreach(j; init_model.joins)
             ret ~= format("t_join_%s_%s", j.k, j.l);
+        foreach(m; init_model.migrations)
+            ret ~= format("mig_%s_%s", m.k, m.l);
         if(!fixedPopSize) {
             foreach(i; 0 .. init_model.P)
                 ret ~= format("N_%s", i);
@@ -62,30 +66,31 @@ class MinFunc {
 
     Model params_to_model(in double[] params)
     in {
-        if(fixedPopSize)
-            assert(params.length == init_model.joins.length);
-        else
-            assert(params.length == 2 * init_model.joins.length + init_model.P);
+        assert(params.length == nrParams);
     }
     body {
         auto joins = init_model.joins.dup;
+        auto migrations = init_model.migrations.dup;
         auto nj = joins.length;
+        auto nm = migrations.length;
         auto popsizeVec = init_model.popSizeVec.dup;
         auto K = init_model.P;
         foreach(i, p; params[0 .. nj])
             joins[i].t = p;
-        
+        foreach(i, p; params[nj .. nj + nm])
+            migrations[i].r = p;
         if(!fixedPopSize) {
-            foreach(i, p; params[nj .. nj + K])
+            foreach(i, p; params[nj + nm .. nj + nm + K])
                 popsizeVec[i] = p;
-            foreach(i, p; params[nj + K .. $])
+            foreach(i, p; params[nj + nm + K .. $])
                 joins[i].popsize = p;
         }
-        return new Model(init_model.nVec, popsizeVec, joins);
+        return new Model(init_model.nVec, popsizeVec, joins, migrations);
     }
 
     double[] model_to_params(in Model model) {
         auto ret = model.joins.map!(j => j.t.to!double())().array();
+        ret ~= model.migrations.map!(m => m.r.to!double())().array();
         if(!fixedPopSize) {
             ret ~= model.popSizeVec.dup;
             ret ~= model.joins.map!(j => j.popsize.to!double())().array();
