@@ -21,6 +21,7 @@ Data input_data;
 bool fixedPopSize = false;
 int max_af = 10;
 double theta;
+int singleJoin = -1;
 Params_t p;
 
 void mainMaxl(string[] argv, Params_t params_) {
@@ -40,7 +41,7 @@ void mainMaxl(string[] argv, Params_t params_) {
     enforce(p.popsizeVec.length == input_data.nVec.length);
     auto init_model = new Model(input_data.nVec, p.popsizeVec, p.joins, p.migrations);
     auto stepper = Stepper.make_stepper(p.n0, p.lingen, p.tMax);
-    auto max_res = maximize(init_model, stepper, input_data, fixedPopSize);
+    auto max_res = maximize(init_model, stepper, input_data, fixedPopSize, singleJoin);
     auto max_model = max_res[0];
     auto logl = max_res[1];
     stderr.writeln(max_model.joins);
@@ -52,6 +53,7 @@ void mainMaxl(string[] argv, Params_t params_) {
 void readParams(string[] argv) {
     getopt(argv, std.getopt.config.caseSensitive,
            "fixedPopSize|f", &fixedPopSize,
+           "singleJoin"    , &singleJoin,
            "max_af|m"      , &max_af);
     
     enforce(argv.length == 2, "need more arguments");
@@ -62,15 +64,14 @@ void printHelp(Exception e) {
     writeln(e.msg);
     writeln("./rarecoal maxl [OPTIONS] <input_file>
 Options:
-    --join, -j <t,k,l,p>   add a join at time t from population l to k, setting new popsize to p
-    --popsize, -p <p1,p2,...>   initial population sizes
+    --singleJoin        only maximize single join
     --fixedPopSize, -f  keep population sizes fixed during maximization
     --max_af, -m        maximum allele frequency to use [10]");
 }
 
-Tuple!(Model, double) maximize(Model init_model, Stepper stepper, Data input_data, bool fixedPopSize) {
+Tuple!(Model, double) maximize(Model init_model, Stepper stepper, Data input_data, bool fixedPopSize, int singleJoin) {
     
-    auto minFunc = new MinFunc(init_model, input_data, stepper, fixedPopSize, theta);
+    auto minFunc = new MinFunc(init_model, input_data, stepper, fixedPopSize, theta, singleJoin);
     auto powell = new Powell!MinFunc(minFunc);
 
     auto init_params = minFunc.model_to_params(init_model);

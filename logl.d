@@ -19,7 +19,7 @@ body {
     auto other = 0;
     foreach(order; input_dat.standardOrder) {
         auto f = order.reduce!"a+b"();
-        if(f < 2) {
+        if(f < 3) {
             other += order in input_dat.counts ? input_dat.counts[order] : 0;
             continue;
         }
