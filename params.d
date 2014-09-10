@@ -8,4 +8,5 @@ struct Params_t {
     Join_t[] joins;
     Migration_t[] migrations;
     double[] popsizeVec;
+    double[] leaf_times;
 }

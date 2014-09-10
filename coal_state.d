@@ -77,20 +77,28 @@ class CoalState {
     
     void update_a(double t_delta) {
         foreach(int k, aa; a) {
-            auto lambda_ = modelState.coal_rate(k);
-            a_buf[k] = aa * approx_exp(-(aa - 1.0) / 2.0 * lambda_ * t_delta);
+            if(t > model.leaf_times[k]) {
+                auto lambda_ = modelState.coal_rate(k);
+                a_buf[k] = aa * approx_exp(-(aa - 1.0) / 2.0 * lambda_ * t_delta);
+            }
+            else
+                a_buf[k] = aa;
         }
     }
     
     void update_b(double t_delta) {
         foreach(k; 0 .. model.P) {
-            auto lambda_ = modelState.coal_rate(k);
-            b_buf[k][] = 0.0;
-            foreach(i; 0 .. max_m[k] + 1) {
-                b_buf[k][i] = b[k][i] * approx_exp(-(i * (i - 1.0) / 2.0 + i * a[k]) * lambda_ * t_delta);
-                if(i < max_m[k])
-                    b_buf[k][i] += b[k][i + 1] * (1.0 - approx_exp(-i * (i + 1.0) / 2.0 * lambda_ * t_delta));
+            if(t > model.leaf_times[k]) {
+                auto lambda_ = modelState.coal_rate(k);
+                b_buf[k][] = 0.0;
+                foreach(i; 0 .. max_m[k] + 1) {
+                    b_buf[k][i] = b[k][i] * approx_exp(-(i * (i - 1.0) / 2.0 + i * a[k]) * lambda_ * t_delta);
+                    if(i < max_m[k])
+                        b_buf[k][i] += b[k][i + 1] * (1.0 - approx_exp(-i * (i + 1.0) / 2.0 * lambda_ * t_delta));
+                }
             }
+            else
+                b_buf[k][] = b[k][];
         }
         foreach(k; 0 .. model.P)
             d += compute_c(k) * t_delta;
@@ -103,6 +111,10 @@ class CoalState {
             throw new IllegalModelException(format("merge (%s=>%s) at time %s: empty source population", l, k, t));
         if(empty(k))
             throw new IllegalModelException(format("merge (%s=>%s) at time %s: empty target population", l, k, t));
+        if(t <= model.leaf_times[k])
+            throw new IllegalModelException(format("merge (%s=>%s) at time %s: too young for target population", l, k, t));
+        if(t <= model.leaf_times[l])
+            throw new IllegalModelException(format("merge (%s=>%s) at time %s: too young for source population", l, k, t));
         a[k] += a[l];
         a[l] = 0.0;
         // stderr.writeln("before join: ", b);
@@ -136,7 +148,7 @@ class CoalState {
     }
     
     void perform_migration(int k, int l, double r, double t_delta) {
-        if(empty(k) || empty(l) || r == 0)
+        if(empty(k) || empty(l) || r == 0 || t <= model.leaf_times[k] || t <= model.leaf_times[l])
             return;
         //print "before migration, b={}".format(self.b)
         auto new_ak = a[k] + a[l] * (1.0 - exp(-r * t_delta));

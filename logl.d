@@ -16,15 +16,16 @@ body {
     auto total_l = 0.0;
     auto log_l = 0.0;
     auto m = input_dat.max_m;
-    auto hom_type = (new int[model.nVec.length]).idup;
+    auto other = 0;
     foreach(order; input_dat.standardOrder) {
-    // foreach(order; taskPool.parallel(input_dat.standardOrder)) {
-        if(order == hom_type)
+        auto f = order.reduce!"a+b"();
+        if(f < 2) {
+            other += order in input_dat.counts ? input_dat.counts[order] : 0;
             continue;
+        }
         if(zip(order, model.nVec).any!"a[0] > a[1]"())
             continue;
         auto state = new CoalState(model, order);
-        auto f = order.reduce!"a+b"();
         auto factor = zip(input_dat.nVec, order).map!(x => binom(x[0], x[1])).reduce!"a*b"();
         stepper.run(state);
         auto l = theta * state.d;
@@ -32,10 +33,10 @@ body {
         total_l += l * factor;
         log_l += log(l) * (order in input_dat.counts ? input_dat.counts[order] : 0.0);
     }
-    auto higher_l = 1.0 - total_l;
-    if(higher_l <= 0.0)
+    auto other_l = 1.0 - total_l;
+    if(other_l <= 0.0)
         throw new IllegalModelException("likelihood of configurations exceeds one");
-    log_l += log(higher_l) * (input_dat.higher + input_dat.counts[hom_type.idup]);
+    log_l += log(other_l) * (input_dat.higher + other);
     return log_l;
 }
 

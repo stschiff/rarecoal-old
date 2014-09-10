@@ -2,6 +2,7 @@ import std.stdio;
 import std.getopt;
 import std.conv;
 import std.exception;
+import std.algorithm;
 import params;
 import data;
 import model;
@@ -12,8 +13,8 @@ int newBranch;
 Params_t p;
 int max_af = 10;
 Data input_data;
-double eval_dt = 0.0005;
-double max_eval_time = 0.025;
+double eval_dt = 0.0001;
+double max_eval_time = 0.012;
 auto evalFileName = "/dev/null";
 
 void mainFindsplit(string[] argv, Params_t params_) {
@@ -25,7 +26,7 @@ void mainFindsplit(string[] argv, Params_t params_) {
         printHelp(e);
         return;
     }
-    auto model = new Model(input_data.nVec, p.popsizeVec, p.joins, p.migrations);
+    auto model = new Model(input_data.nVec, p.popsizeVec, p.joins, p.migrations, p.leaf_times);
     auto stepper = Stepper.make_stepper(p.n0, p.lingen, p.tMax);
     auto eval_nr = to!int(max_eval_time / eval_dt);
     auto P = p.popsizeVec.length;
@@ -36,9 +37,9 @@ void mainFindsplit(string[] argv, Params_t params_) {
     foreach(k; 0 .. P) {
         if(k == newBranch)
             continue;
-        for(auto t = eval_dt; t < max_eval_time; t += eval_dt) {
+        for(auto t = max(eval_dt, max(p.leaf_times[newBranch], p.leaf_times[k])); t < max_eval_time; t += eval_dt) {
             // stderr.writefln("trying k=%s, t=%s", k, t);
-            auto new_join = Join_t(t, to!int(k), newBranch, 1.0);
+            auto new_join = Join_t(t, to!int(k), newBranch, -1.0); //-1 means that it doesn't change the pop.size at that point
             auto new_model = new Model(input_data.nVec, p.popsizeVec, p.joins ~ new_join);
             try {
                 auto logl_ = totalLikelihood(new_model, input_data, stepper, p.mu * 2.0 * p.n0);

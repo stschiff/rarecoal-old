@@ -19,8 +19,10 @@ class Model {
     const double[] popSizeVec;
     const Join_t[] joins;
     const Migration_t[] migrations;
+    const double leaf_times[];
     
-    this(in int[] nVec, in double[] popsizeVec, in Join_t[] joins=[], in Migration_t[] migrations=[]) {
+    this(in int[] nVec, in double[] popsizeVec, in Join_t[] joins=[], in Migration_t[] migrations=[],
+         in double[] leaf_times=[]) {
         this.nVec = nVec;
         if(popsizeVec.length == 0) {
             auto pVec = new double[nVec.length];
@@ -29,8 +31,17 @@ class Model {
         }
         else
             this.popSizeVec = popsizeVec;
+        if(leaf_times.length == 0) {
+            auto l = new double[nVec.length];
+            l[] = 0.0;
+            this.leaf_times = l;
+        }
+        else
+            this.leaf_times = leaf_times;
+        
         enforce(nVec.length == popSizeVec.length, "need same number of populations in nVec and p.size");
-        if(popsizeVec.any!(p => p < 0.001)() || joins.any!(j => j.popsize < 0.001)())
+        enforce(nVec.length == this.leaf_times.length, "need same number of populations in nVec and leaf_times");
+        if(popsizeVec.any!(p => p < 0.001)() || joins.any!(j => j.popsize > 0.0 && j.popsize < 0.001)())
             throw new IllegalModelException("population size can't be lower than 0.001");
         if(popsizeVec.any!(p => p > 100.0)() || joins.any!(j => j.popsize > 100.0)())
             throw new IllegalModelException("population size can't be greater than 100");
@@ -77,7 +88,8 @@ class ModelState {
     
     void join_done() {
         auto j = sorted_joins[joins_index];
-        popsizeVec[j.k] = j.popsize;
+        if(j.popsize > 0.0)
+            popsizeVec[j.k] = j.popsize;
         foreach(ref mig; migrations)
             if(j.k == mig.k || j.l == mig.k || j.k == mig.l || j.l == mig.l)
                 mig.r = 0.0;

@@ -78,6 +78,10 @@ else {
                 popsize = fields[3].to!double();
             p.joins ~= Join_t(t, k, l, popsize);
         }
+
+        void handleLeafTimes(string option, string str) {
+            p.leaf_times = str.split(",").map!"a.to!double()"().array();
+        }
     
         void handlePopsize(string option, string str) {
             p.popsizeVec = str.split(",").map!"a.to!double()"().array();
@@ -96,6 +100,7 @@ else {
             "tMax"        , &p.tMax,
             "join|j"      , &handleJoins,
             "migration|g" , &handleMigrations,
+            "leaf_times"  , &handleLeafTimes,
             "popsize|p"   , &handlePopsize,
             "nrThreads"   , &nrThreads);
 
@@ -114,6 +119,7 @@ Options:
         --tMax                        maximum time to which to run, in 2n0 generations [20.0]
         --join, -j <t,k,l,popsize=1>  add a join at time t from population l to k, optionally setting the new popsize 
         --migration, -g <k, l, rate>  add a bi-directional migration rate between branch k and l (up to the first coalescence)
+        --leaf_times <t1,t2,t3...>    for ancient samples choose t > 0.                   
         --popsize, -p <p1,p2,...>     initial population sizes
         --nrThreads                   nr of Threads to use, default: nr of CPUs
 
