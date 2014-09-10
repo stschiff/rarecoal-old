@@ -25,14 +25,14 @@ void mainProb(string[] argv, Params_t params_) {
         return;
     }
     p = params_;
-    auto model = new Model(nVec, p.popsizeVec, p.joins);
+    auto model = new Model(nVec, p.popsizeVec, p.joins, p.migrations);
     auto state = new CoalState(model, mVec);
     auto m = mVec.reduce!"a+b"();
     auto stepper = Stepper.make_stepper(p.n0, p.lingen, p.tMax);
     auto factor = zip(nVec, mVec).map!(x => binom(x[0], x[1])).reduce!"a*b"();
     stepper.run(state);
     auto theta = 2.0 * p.n0 * p.mu;
-    auto result = m ? theta * factor * state.d : exp(-theta * state.e);
+    auto result = theta * factor * state.d;
     writeln(result);
 
 }
@@ -50,10 +50,8 @@ void readParams(string[] argv) {
 
 void printHelp(Exception e) {
     writeln(e.msg);
-    writeln("./rarecoal prob [OPTIONS] <n1>[,<n2>[,...]] <m1>[,<m2>[,...]]
-Options:
-    --join, -j <t,k,l,p>        add a join at time t from population l to k, setting the new population size to p
-    --popsize, -p <p1,p2,...>   initial population sizes");
+    writeln("./rarecoal prob <n1>[,<n2>[,...]] <m1>[,<m2>[,...]]
+");
 }
 
 double binom(int m, int k) {

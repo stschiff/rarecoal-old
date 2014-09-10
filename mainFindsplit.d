@@ -25,7 +25,7 @@ void mainFindsplit(string[] argv, Params_t params_) {
         printHelp(e);
         return;
     }
-    auto model = new Model(input_data.nVec, p.popsizeVec, p.joins);
+    auto model = new Model(input_data.nVec, p.popsizeVec, p.joins, p.migrations);
     auto stepper = Stepper.make_stepper(p.n0, p.lingen, p.tMax);
     auto eval_nr = to!int(max_eval_time / eval_dt);
     auto P = p.popsizeVec.length;

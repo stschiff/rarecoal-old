@@ -2,9 +2,11 @@ import std.typecons;
 import std.string;
 import std.algorithm;
 import std.conv;
+import std.exception;
 import std.array;
 
 alias Tuple!(double, "t", int, "k", int, "l", double, "popsize") Join_t;
+alias Tuple!(int, "k", int, "l", double, "r") Migration_t;
 
 class IllegalModelException : Exception {
     this(string msg) {
@@ -16,18 +18,27 @@ class Model {
     const int[] nVec;
     const double[] popSizeVec;
     const Join_t[] joins;
+    const Migration_t[] migrations;
     
-    this(in int[] nVec, in double[] popsizeVec, in Join_t[] joins=[]) {
+    this(in int[] nVec, in double[] popsizeVec, in Join_t[] joins=[], in Migration_t[] migrations=[]) {
         this.nVec = nVec;
+        if(popsizeVec.length == 0) {
+            auto pVec = new double[nVec.length];
+            pVec[] = 1.0;
+            popSizeVec = pVec;
+        }
+        else
+            this.popSizeVec = popsizeVec;
+        enforce(nVec.length == popSizeVec.length, "need same number of populations in nVec and p.size");
         if(popsizeVec.any!(p => p < 0.001)() || joins.any!(j => j.popsize < 0.001)())
             throw new IllegalModelException("population size can't be lower than 0.001");
         if(popsizeVec.any!(p => p > 100.0)() || joins.any!(j => j.popsize > 100.0)())
             throw new IllegalModelException("population size can't be greater than 100");
-        this.popSizeVec = popsizeVec;
         assert(popsizeVec.all!"a>0.0"());
         assert(joins.all!"a.t>0.0 && a.popsize>0.0"());
         assert(joins.all!"a.k!=a.l"());
         this.joins = joins;
+        this.migrations = migrations;
     }
     
     @property int P() const {
@@ -44,12 +55,14 @@ class ModelState {
     const Model model;
     const Join_t[] sorted_joins;
     double[] popsizeVec;
+    Migration_t[] migrations;
     int joins_index;
     
     this(in Model model) {
         this.model = model;
         this.sorted_joins = model.joins.dup.sort!"a.t < b.t"().array();
         this.popsizeVec = model.popSizeVec.dup;
+        this.migrations = model.migrations.dup;
         this.joins_index = 0;
     }
     
@@ -65,6 +78,9 @@ class ModelState {
     void join_done() {
         auto j = sorted_joins[joins_index];
         popsizeVec[j.k] = j.popsize;
+        foreach(ref mig; migrations)
+            if(j.k == mig.k || j.l == mig.k || j.k == mig.l || j.l == mig.l)
+                mig.r = 0.0;
         joins_index += 1;
     }
     

@@ -60,6 +60,15 @@ else {
     }
     
     void readParams(ref string[] argv) {
+        void handleMigrations(string option, string str) {
+            auto fields = str.split(",");
+            auto k = fields[0].to!int();
+            auto l = fields[1].to!int();
+            auto r = fields[2].to!double();
+            p.migrations ~= Migration_t(k, l, r);
+            p.migrations ~= Migration_t(l, k, r);
+        }
+
         void handleJoins(string option, string str) {
             auto fields = str.split(",");
             auto t = fields[0].to!double();
@@ -82,13 +91,14 @@ else {
         p.tMax = 20.0;
             
         getopt(argv, std.getopt.config.passThrough,
-            "mu"        , &p.mu,
-            "n0"        , &p.n0,
-            "lingen"    , &p.lingen,
-            "tMax"      , &p.tMax,
-            "join|j"    , &handleJoins,
-            "popsize|p" , &handlePopsize,
-            "nrThreads" , &nrThreads);
+            "mu"          , &p.mu,
+            "n0"          , &p.n0,
+            "lingen"      , &p.lingen,
+            "tMax"        , &p.tMax,
+            "join|j"      , &handleJoins,
+            "migration|g" , &handleMigrations,
+            "popsize|p"   , &handlePopsize,
+            "nrThreads"   , &nrThreads);
 
         if(nrThreads)
           std.parallelism.defaultPoolThreads(nrThreads);
@@ -104,6 +114,7 @@ Options:
                                       to exponential intervals [400]
         --tMax                        maximum time to which to run, in 2n0 generations [20.0]
         --join, -j <t,k,l,popsize=1>  add a join at time t from population l to k, optionally setting the new popsize 
+        --migration, -g <k, l, rate>  add a bi-directional migration rate between branch k and l (up to the first coalescence)
         --popsize, -p <p1,p2,...>     initial population sizes
         --nrThreads                   nr of Threads to use, default: nr of CPUs
 

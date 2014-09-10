@@ -6,5 +6,6 @@ struct Params_t {
     int lingen = 400;
     double tMax = 20.0;
     Join_t[] joins;
+    Migration_t[] migrations;
     double[] popsizeVec;
 }

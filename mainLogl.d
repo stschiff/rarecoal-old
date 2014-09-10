@@ -34,7 +34,7 @@ void mainLogl(string[] argv, Params_t params_) {
         p.popsizeVec[] = 1.0;
     }
     enforce(p.popsizeVec.length == input_data.nVec.length);
-    auto model = new Model(input_data.nVec, p.popsizeVec, p.joins);
+    auto model = new Model(input_data.nVec, p.popsizeVec, p.joins, p.migrations);
     auto stepper = Stepper.make_stepper(p.n0, p.lingen, p.tMax);
     auto logl = totalLikelihood(model, input_data, stepper, p.mu * 2.0 * p.n0);
     writeSpectrum(model, input_data, stepper, p.mu * 2.0 * p.n0, spectrumfile);

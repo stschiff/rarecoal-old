@@ -43,7 +43,7 @@ void mainMCMC(string[] argv, Params_t params_) {
     }
     enforce(p.popsizeVec.length == input_data.nVec.length);
 
-    auto init_model = new Model(input_data.nVec, p.popsizeVec, p.joins);
+    auto init_model = new Model(input_data.nVec, p.popsizeVec, p.joins, p.migrations);
     auto stepper = Stepper.make_stepper(p.n0, p.lingen, p.tMax);
     auto minFunc = new MinFunc(init_model, input_data, stepper, fixedPopSize, theta);
     auto init_params = minFunc.model_to_params(init_model);

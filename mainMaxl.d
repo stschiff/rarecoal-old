@@ -38,7 +38,7 @@ void mainMaxl(string[] argv, Params_t params_) {
         p.popsizeVec[] = 1.0;
     }
     enforce(p.popsizeVec.length == input_data.nVec.length);
-    auto init_model = new Model(input_data.nVec, p.popsizeVec, p.joins);
+    auto init_model = new Model(input_data.nVec, p.popsizeVec, p.joins, p.migrations);
     auto stepper = Stepper.make_stepper(p.n0, p.lingen, p.tMax);
     auto max_res = maximize(init_model, stepper, input_data, fixedPopSize);
     auto max_model = max_res[0];

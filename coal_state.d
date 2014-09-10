@@ -22,7 +22,7 @@ class CoalState {
     int m;
     double[] a, a_buf;
     double[][] b, b_buf;
-    double d, e, t;
+    double d, t;
     
     this(in Model model, in int[] init)
     in {
@@ -43,7 +43,6 @@ class CoalState {
             b_buf[k][] = 0.0;
         }
         d = 0.0; // This is the cumulative version of c
-        e = 0.0; // This is the cumulative version of a
         t = 0.0;
         foreach(k, s; init)
             b[k][s] = 1.0;
@@ -70,10 +69,8 @@ class CoalState {
     void update_all(double t_delta) {
         update_a(t_delta);
         update_b(t_delta);
-        update_e(t_delta);
-        update_d(t_delta);
-        swap(a, a_buf);
-        swap(b, b_buf);
+        foreach(mig; modelState.migrations)
+            perform_migration(mig, t_delta);
     }
     
     void update_a(double t_delta) {
@@ -93,26 +90,21 @@ class CoalState {
                     b_buf[k][i] += b[k][i + 1] * (1.0 - approx_exp(-i * (i + 1.0) / 2.0 * lambda_ * t_delta));
             }
         }
-    }
-
-    void update_d(double t_delta) {
         foreach(k; 0 .. model.P)
             d += compute_c(k) * t_delta;
+        swap(a, a_buf);
+        swap(b, b_buf);
     }
-    
-    void update_e(double t_delta) {
-        e += a.reduce!"a+b"() * t_delta;
-    }
-    
+
     void perform_join(int k, int l) {
-        if(a[l] + b[l][1..$].reduce!"a+b"() == 0)
+        if(empty(l))
             throw new IllegalModelException(format("merge (%s=>%s) at time %s: empty source population", l, k, t));
-        if(a[k] + b[k][1..$].reduce!"a+b"() == 0)
+        if(empty(k))
             throw new IllegalModelException(format("merge (%s=>%s) at time %s: empty target population", l, k, t));
         a[k] += a[l];
         a[l] = 0.0;
         // stderr.writeln("before join: ", b);
-        auto new_max_m = max_m[k] + max_m[l];
+        auto new_max_m = min(m, max_m[k] + max_m[l]);
         auto new_b = new double[m + 1];
         new_b[] = 0.0;
         foreach(i; 0 .. new_max_m + 1)
@@ -127,6 +119,10 @@ class CoalState {
         max_m[l] = 0;
     }
     
+    bool empty(int k) {
+        return a[k] + b[k][1..$].reduce!"a+b"() == 0;
+    }
+    
     double compute_c(int k) {
         if(max_m[k] == 0)
             return 0.0;
@@ -135,6 +131,35 @@ class CoalState {
             if(l != k)
                 ret *= b[l][0];
         return ret;
+    }
+    
+    void perform_migration(Migration_t mig, double t_delta) {
+        if(empty(mig.k) || empty(mig.l) || mig.r == 0)
+            return;
+        //print "before migration, b={}".format(self.b)
+        auto new_ak = a[mig.k] + a[mig.l] * (1.0 - exp(-mig.r * t_delta));
+        auto new_al = a[mig.l] * exp(-mig.r * t_delta);
+        a[mig.k] = new_ak;
+        a[mig.l] = new_al;
+        double[] new_bkiVec;
+        double[] new_bliVec;
+        foreach(i; 0 .. m + 1) {
+            auto tot_rate = iota(1, max_m[mig.l] + 1).map!(j => b[mig.l][j] * j * mig.r * t_delta)().reduce!"a+b"();
+            auto new_bki = b[mig.k][i] * exp(-tot_rate);
+            if(i > 0)
+                new_bki += b[mig.k][i - 1] * (1.0 - exp(-tot_rate));
+            auto new_bli = b[mig.l][i] * exp(-i * mig.r * t_delta);
+            if(i < max_m[mig.l])
+                new_bli += b[mig.l][i + 1] * (1.0 - exp(-(i + 1) * mig.r * t_delta));
+            new_bkiVec ~= new_bki;
+            new_bliVec ~= new_bli;
+        }
+        
+        b[mig.k] = new_bkiVec;
+        b[mig.l] = new_bliVec;
+        // print "after migration, b={}".format(self.b)
+        auto new_max_m = min(m, max_m[mig.k] + max_m[mig.l]);
+        max_m[mig.k] = new_max_m;
     }
 }
 
@@ -156,4 +181,6 @@ unittest {
     cs.step(0.11);
     assert(cs.b[1][2] == 0.0, text(cs.b));
     assert(cs.b[0][3] > 0.0);
+    
+    
 }
