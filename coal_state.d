@@ -134,7 +134,7 @@ class CoalState {
     }
     
     bool empty(int k) {
-        return a[k] + b[k][1..$].reduce!"a+b"() == 0;
+        return a[k] + reduce!"a+b"(0.0, b[k][1..$]) == 0;
     }
     
     double compute_c(int k) {
@@ -151,20 +151,20 @@ class CoalState {
         if(empty(k) || empty(l) || r == 0 || t <= model.leaf_times[k] || t <= model.leaf_times[l])
             return;
         //print "before migration, b={}".format(self.b)
-        auto new_ak = a[k] + a[l] * (1.0 - exp(-r * t_delta));
-        auto new_al = a[l] * exp(-r * t_delta);
+        auto new_ak = a[k] + a[l] * (1.0 - approx_exp(-r * t_delta));
+        auto new_al = a[l] * approx_exp(-r * t_delta);
         a[k] = new_ak;
         a[l] = new_al;
         double[] new_bkiVec;
         double[] new_bliVec;
         foreach(i; 0 .. m + 1) {
             auto tot_rate = reduce!"a+b"(0.0, iota(1, max_m[l] + 1).map!(j => b[l][j] * j * r * t_delta)());
-            auto new_bki = b[k][i] * exp(-tot_rate);
+            auto new_bki = b[k][i] * approx_exp(-tot_rate);
             if(i > 0)
-                new_bki += b[k][i - 1] * (1.0 - exp(-tot_rate));
-            auto new_bli = b[l][i] * exp(-i * r * t_delta);
+                new_bki += b[k][i - 1] * (1.0 - approx_exp(-tot_rate));
+            auto new_bli = b[l][i] * approx_exp(-i * r * t_delta);
             if(i < max_m[l])
-                new_bli += b[l][i + 1] * (1.0 - exp(-(i + 1) * r * t_delta));
+                new_bli += b[l][i + 1] * (1.0 - approx_exp(-(i + 1) * r * t_delta));
             new_bkiVec ~= new_bki;
             new_bliVec ~= new_bli;
         }

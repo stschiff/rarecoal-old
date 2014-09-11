@@ -27,6 +27,7 @@ class MinFunc {
         this.theta = theta;
         this.singleJoin = singleJoin;
         this.exclude_list = exclude_list;
+        this.minFreq = minFreq;
         // totalLikelihood(new Model(init_model.nVec, init_model.popSizeVec, init_model.joins), input_data, stepper_, theta); // this just serves to check for any exceptions with the initial model
         totalLikelihood(init_model, input_data, stepper_, theta, minFreq, exclude_list);
     }

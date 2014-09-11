@@ -96,6 +96,7 @@ else {
         p.n0 = 20000;
         p.lingen = 400;
         p.tMax = 20.0;
+        p.minFreq = 1;
             
         getopt(argv, std.getopt.config.passThrough,
             "mu"          , &p.mu,

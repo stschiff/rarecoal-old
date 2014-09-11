@@ -19,7 +19,7 @@ body {
     auto m = input_dat.max_m;
     auto other = 0;
     foreach(order; input_dat.standardOrder) {
-        auto f = order.reduce!"a+b"();
+        auto f = reduce!"a+b"(0.0, order);
         if(f < min_freq || exclude_list.canFind(order)) {
             other += order in input_dat.counts ? input_dat.counts[order] : 0;
             continue;
@@ -30,7 +30,7 @@ body {
         auto factor = zip(input_dat.nVec, order).map!(x => binom(x[0], x[1])).reduce!"a*b"();
         stepper.run(state);
         auto l = theta * state.d;
-        assert(!isNaN(l) && l > 0.0, text(l, " ", state.a, " ", state.b, " ", model, " ", order));
+        assert(!isNaN(l) && l > 0.0, text(l, " ", state.a, " ", state.b, " ", f, " ", min_freq, " ", order));
         total_l += l * factor;
         log_l += log(l) * (order in input_dat.counts ? input_dat.counts[order] : 0.0);
     }
