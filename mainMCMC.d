@@ -25,6 +25,7 @@ int burnin_cycles = 100;
 int main_cycles = 1000;
 int burnin_steps, main_steps;
 auto tracefile = "/dev/null";
+double maxTime = 1.0;
 Params_t p;
 
 void mainMCMC(string[] argv, Params_t params_) {
@@ -43,9 +44,9 @@ void mainMCMC(string[] argv, Params_t params_) {
     }
     enforce(p.popsizeVec.length == input_data.nVec.length);
 
-    auto init_model = new Model(input_data.nVec, p.popsizeVec, p.joins, p.migrations);
+    auto init_model = new Model(input_data.nVec, p.popsizeVec, p.joins, p.migrations, p.leaf_times);
     auto stepper = Stepper.make_stepper(p.n0, p.lingen, p.tMax);
-    auto minFunc = new MinFunc(init_model, input_data, stepper, fixedPopSize, theta, -1, p.minFreq, p.exclude_list);
+    auto minFunc = new MinFunc(init_model, input_data, stepper, fixedPopSize, theta, -1, p.minFreq, p.exclude_list, maxTime);
     auto init_params = minFunc.model_to_params(init_model);
     burnin_steps = burnin_cycles * minFunc.nrParams;
     main_steps = main_cycles * minFunc.nrParams;
@@ -60,7 +61,8 @@ void readParams(string[] argv) {
            "max_af|m"       , &max_af,
            "burnin_cycles|b", &burnin_cycles,
            "main_cycles|s"  , &main_cycles,
-           "tracefile|t"    , &tracefile);
+           "tracefile|t"    , &tracefile,
+           "max_time"       , &maxTime);
     
     enforce(argv.length == 2, "need more arguments");
     input_data = new Data(argv[1], max_af);

@@ -8,8 +8,8 @@ import data;
 import coal_state;
 import stepper;
 
-double totalLikelihood(in Model model, in Data input_dat, in Stepper stepper, double theta, int min_freq=1,
-                       in int[][] exclude_list=[])
+double totalLikelihood(in Model model, in Data input_dat, in Stepper stepper, double theta, int min_freq,
+                       in int[][] exclude_list)
 in {
     assert(model.nVec == input_dat.nVec);
 }

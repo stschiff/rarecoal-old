@@ -25,7 +25,7 @@ void mainProb(string[] argv, Params_t params_) {
         return;
     }
     p = params_;
-    auto model = new Model(nVec, p.popsizeVec, p.joins, p.migrations);
+    auto model = new Model(nVec, p.popsizeVec, p.joins, p.migrations, p.leaf_times);
     auto state = new CoalState(model, mVec);
     auto m = mVec.reduce!"a+b"();
     auto stepper = Stepper.make_stepper(p.n0, p.lingen, p.tMax);

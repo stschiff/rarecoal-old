@@ -22,6 +22,7 @@ bool fixedPopSize = false;
 int max_af = 10;
 double theta;
 int singleJoin = -1;
+double maxTime = 1.0;
 Params_t p;
 
 void mainMaxl(string[] argv, Params_t params_) {
@@ -38,8 +39,12 @@ void mainMaxl(string[] argv, Params_t params_) {
         p.popsizeVec = new double[input_data.nVec.length];
         p.popsizeVec[] = 1.0;
     }
+    if(p.leaf_times.length == 0) {
+        p.leaf_times = new double[input_data.nVec.length];
+        p.leaf_times[] = 0.0;
+    }
     enforce(p.popsizeVec.length == input_data.nVec.length);
-    auto init_model = new Model(input_data.nVec, p.popsizeVec, p.joins, p.migrations);
+    auto init_model = new Model(input_data.nVec, p.popsizeVec, p.joins, p.migrations, p.leaf_times);
     auto stepper = Stepper.make_stepper(p.n0, p.lingen, p.tMax);
     auto max_res = maximize(init_model, stepper, input_data, fixedPopSize, singleJoin);
     auto max_model = max_res[0];
@@ -54,7 +59,8 @@ void readParams(string[] argv) {
     getopt(argv, std.getopt.config.caseSensitive,
            "fixedPopSize|f", &fixedPopSize,
            "singleJoin"    , &singleJoin,
-           "max_af|m"      , &max_af);
+           "max_af|m"      , &max_af,
+           "max_time"      , &maxTime);
     
     enforce(argv.length == 2, "need more arguments");
     input_data = new Data(argv[1], max_af);
@@ -72,7 +78,7 @@ Options:
 Tuple!(Model, double) maximize(Model init_model, Stepper stepper, Data input_data, bool fixedPopSize, int singleJoin) {
     
     auto minFunc = new MinFunc(init_model, input_data, stepper, fixedPopSize, theta, singleJoin,
-                               p.minFreq, p.exclude_list);
+                               p.minFreq, p.exclude_list, maxTime);
     auto powell = new Powell!MinFunc(minFunc);
 
     auto init_params = minFunc.model_to_params(init_model);

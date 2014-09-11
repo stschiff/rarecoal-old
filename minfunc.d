@@ -16,10 +16,11 @@ class MinFunc {
     double theta;
     int singleJoin;
     int minFreq;
+    double max_time;
     const int[][] exclude_list;
 
     this(in Model init_model, in Data input_data, in Stepper stepper_, bool fixedPopSize, double theta, int singleJoin,
-         int minFreq, in int[][] exclude_list) {
+         int minFreq, in int[][] exclude_list, double max_time) {
         this.init_model = init_model;
         this.input_data = input_data;
         this.stepper_ = stepper_;
@@ -28,6 +29,7 @@ class MinFunc {
         this.singleJoin = singleJoin;
         this.exclude_list = exclude_list;
         this.minFreq = minFreq;
+        this.max_time = max_time;
         // totalLikelihood(new Model(init_model.nVec, init_model.popSizeVec, init_model.joins), input_data, stepper_, theta); // this just serves to check for any exceptions with the initial model
         totalLikelihood(init_model, input_data, stepper_, theta, minFreq, exclude_list);
     }
@@ -84,7 +86,9 @@ class MinFunc {
     }
     
     bool invalid(in double[] params) {
-        return params.any!"a<0.0"();
+        auto neg = params.any!"a<0.0"();
+        auto max_t = singleJoin >= 0 ? params[0] > max_time : params[0..init_model.joins.length].any!(t => t > max_time)();
+        return neg || max_t;
     }
 
     Model params_to_model(in double[] params)
@@ -117,7 +121,7 @@ class MinFunc {
                     joins[i].popsize = p;
             }
         }
-        return new Model(init_model.nVec, popsizeVec, joins, migrations);
+        return new Model(init_model.nVec, popsizeVec, joins, migrations, init_model.leaf_times);
     }
 
     double[] model_to_params(in Model model) {

@@ -21,8 +21,8 @@ class Model {
     const Migration_t[] migrations;
     const double leaf_times[];
     
-    this(in int[] nVec, in double[] popsizeVec, in Join_t[] joins=[], in Migration_t[] migrations=[],
-         in double[] leaf_times=[]) {
+    this(in int[] nVec, in double[] popsizeVec, in Join_t[] joins, in Migration_t[] migrations,
+         in double[] leaf_times) {
         this.nVec = nVec;
         if(popsizeVec.length == 0) {
             auto pVec = new double[nVec.length];
@@ -46,7 +46,6 @@ class Model {
         if(popsizeVec.any!(p => p > 100.0)() || joins.any!(j => j.popsize > 100.0)())
             throw new IllegalModelException("population size can't be greater than 100");
         assert(popsizeVec.all!"a>0.0"());
-        assert(joins.all!"a.t>0.0 && a.popsize>0.0"());
         assert(joins.all!"a.k!=a.l"());
         this.joins = joins;
         this.migrations = migrations;
