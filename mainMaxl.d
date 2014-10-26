@@ -19,13 +19,13 @@ import params;
 
 Data input_data;
 bool fixedPopSize = false;
-int max_af = 10;
 double theta;
 int singleJoin = -1;
 double maxTime = 1.0;
 Params_t p;
 
 void mainMaxl(string[] argv, Params_t params_) {
+    p = params_;
     try {
         readParams(argv);
     }
@@ -33,7 +33,6 @@ void mainMaxl(string[] argv, Params_t params_) {
         printHelp(e);
         return;
     }
-    p = params_;
     theta = 2.0 * p.mu * p.n0;
     if(p.popsizeVec.length == 0) {
         p.popsizeVec = new double[input_data.nVec.length];
@@ -59,11 +58,10 @@ void readParams(string[] argv) {
     getopt(argv, std.getopt.config.caseSensitive,
            "fixedPopSize|f", &fixedPopSize,
            "singleJoin"    , &singleJoin,
-           "max_af|m"      , &max_af,
            "max_time"      , &maxTime);
     
     enforce(argv.length == 2, "need more arguments");
-    input_data = new Data(argv[1], max_af);
+    input_data = new Data(argv[1], p.max_af, p.indices, p.nrCalledBases);
 }
 
 void printHelp(Exception e) {
@@ -71,8 +69,7 @@ void printHelp(Exception e) {
     writeln("./rarecoal maxl [OPTIONS] <input_file>
 Options:
     --singleJoin        only maximize single join
-    --fixedPopSize, -f  keep population sizes fixed during maximization
-    --max_af, -m        maximum allele frequency to use [10]");
+    --fixedPopSize, -f  keep population sizes fixed during maximization");
 }
 
 Tuple!(Model, double) maximize(Model init_model, Stepper stepper, Data input_data, bool fixedPopSize, int singleJoin) {

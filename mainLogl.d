@@ -21,6 +21,7 @@ Params_t p;
 
 void mainLogl(string[] argv, Params_t params_) {
     
+    p = params_;
     try {
         readParams(argv);
     }
@@ -28,7 +29,6 @@ void mainLogl(string[] argv, Params_t params_) {
         printHelp(e);
         return;
     }
-    p = params_;
     if(p.popsizeVec.length == 0) {
         p.popsizeVec = new double[input_data.nVec.length];
         p.popsizeVec[] = 1.0;
@@ -44,18 +44,16 @@ void mainLogl(string[] argv, Params_t params_) {
 
 void readParams(string[] argv) {
     getopt(argv, std.getopt.config.caseSensitive,
-           "max_af|m"  , &max_af,
            "spectrumfile|s", &spectrumfile);
     
     enforce(argv.length == 2, "need more arguments");
-    input_data = new Data(argv[1], max_af);
+    input_data = new Data(argv[1], p.max_af, p.indices, p.nrCalledBases);
 }
 
 void printHelp(Exception e) {
     writeln(e.msg);
     writeln("./rarecoal prob [OPTIONS] <input_file>
 Options:
-    --max_af, -m                maximum allele frequency to use [10]
     --spectrumfile, -s          file to write the spectrum to");
 }
 

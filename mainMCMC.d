@@ -19,7 +19,6 @@ import params;
 
 Data input_data;
 bool fixedPopSize = false;
-int max_af = 10;
 double theta;
 int burnin_cycles = 100;
 int main_cycles = 1000;
@@ -58,14 +57,13 @@ void mainMCMC(string[] argv, Params_t params_) {
 void readParams(string[] argv) {
     getopt(argv, std.getopt.config.caseSensitive,
            "fixedPopSize|f" , &fixedPopSize,
-           "max_af|m"       , &max_af,
            "burnin_cycles|b", &burnin_cycles,
            "main_cycles|s"  , &main_cycles,
            "tracefile|t"    , &tracefile,
            "max_time"       , &maxTime);
     
     enforce(argv.length == 2, "need more arguments");
-    input_data = new Data(argv[1], max_af);
+    input_data = new Data(argv[1], p.max_af, p.indices, p.nrCalledBases);
 }
 
 void printHelp(Exception e) {
@@ -73,7 +71,6 @@ void printHelp(Exception e) {
     writeln("./rarecoal mcmc [OPTIONS] <input_file>
 Options:
     --fixedPopSize, -f          keep population sizes fixed during maximization
-    --max_af, -m                maximum allele frequency to use [10]
     --burnin_steps, -b          MCMC burnin steps [100]
     --main_steps, -s            MCMC main steps [1000]
     --tracefile, -t             File to write the MCMC trace to [/dev/null]");

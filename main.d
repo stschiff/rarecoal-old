@@ -88,6 +88,10 @@ void readParams(ref string[] argv) {
     void handlePopsize(string option, string str) {
         p.popsizeVec = str.split(",").map!"a.to!double()"().array();
     }
+
+    void handleIndices(string option, string str) {
+        p.indices = str.split(",").map!"a.to!int()"().array();
+    }
     
     void handleExcludes(string option, string str) {
         p.exclude_list = str.split(";").map!(w => w.split(",").map!"a.to!int()"().array()).array();
@@ -99,19 +103,24 @@ void readParams(ref string[] argv) {
     p.lingen = 400;
     p.tMax = 20.0;
     p.minFreq = 1;
+    p.max_af = 10;
+    p.nrCalledBases = 2064554803;
         
     getopt(argv, std.getopt.config.passThrough,
-        "mu"          , &p.mu,
-        "n0"          , &p.n0,
-        "lingen"      , &p.lingen,
-        "tMax"        , &p.tMax,
-        "join|j"      , &handleJoins,
-        "migration|g" , &handleMigrations,
-        "leaf_times"  , &handleLeafTimes,
-        "popsize|p"   , &handlePopsize,
-        "minFreq"     , &p.minFreq,
-        "exclude"     , &handleExcludes,
-        "nrThreads"   , &nrThreads);
+        "mu"           , &p.mu,
+        "n0"           , &p.n0,
+        "lingen"       , &p.lingen,
+        "tMax"         , &p.tMax,
+        "join|j"       , &handleJoins,
+        "migration|g"  , &handleMigrations,
+        "leaf_times"   , &handleLeafTimes,
+        "popsize|p"    , &handlePopsize,
+        "minFreq"      , &p.minFreq,
+        "exclude"      , &handleExcludes,
+        "nrThreads"    , &nrThreads,
+        "indices"      , &handleIndices,
+        "max_af|m"     , &p.max_af,
+        "nrCalledBases", &p.nrCalledBases);
 
     if(nrThreads)
       std.parallelism.defaultPoolThreads(nrThreads);
@@ -133,6 +142,9 @@ Options:
     --minFreq                     minimum frequency to evaluate
     --exclude                     exclude these patterns (semicolon-separated patterns of comma-separated patters)
     --nrThreads                   nr of Threads to use, default: nr of CPUs
+    --indices i1,i2,...           If given, use only those populations in the input file specified by the indices.
+    --max_af, -m                  Maximum allele frequency to read in.
+    --nrCalledBases               nr of called bases in the genome [default: 2064554803]
 
 Subprograms:        
     prob         compute the probability of a single configuration of derived alleles
@@ -154,4 +166,7 @@ void reportParams() {
     stderr.writeln("migrations:      ", p.migrations);
     stderr.writeln("population sizes:", p.popsizeVec);
     stderr.writeln("leaf times:      ", p.leaf_times);
+    stderr.writeln("indices:         ", p.indices);
+    stderr.writeln("max_af:          ", p.max_af);
+    stderr.writeln("nrCalledBases:   ", p.nrCalledBases);
 }

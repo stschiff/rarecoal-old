@@ -11,7 +11,6 @@ import logl;
 
 int newBranch;
 Params_t p;
-int max_af = 10;
 Data input_data;
 double eval_dt = 0.0001;
 double max_eval_time = 0.012;
@@ -72,14 +71,13 @@ void mainFindsplit(string[] argv, Params_t params_) {
 
 void readParams(string[] argv) {
     getopt(argv, std.getopt.config.caseSensitive,
-           "max_af|m"       , &max_af,
            "newBranch|n"    , &newBranch,
            "eval_dt|d"      , &eval_dt,
            "max_eval_time|t", &max_eval_time,
            "evalFile|f"     , &evalFileName);
     
     enforce(argv.length == 2, "need more arguments");
-    input_data = new Data(argv[1], max_af);
+    input_data = new Data(argv[1], p.max_af, p.indices, p.nrCalledBases);
     if(p.popsizeVec.length == 0) {
         p.popsizeVec = new double[input_data.nVec.length];
         p.popsizeVec[] = 1.0;
@@ -91,7 +89,6 @@ void printHelp(Exception e) {
     writeln(e.msg);
     writeln("./rarecoal findsplit [OPTIONS] <input_file>
 Options:
-    --max_af, -m                maximum allele frequency to use [10]
     --newBranch, -n             the new branch to test
     --eval_dt, -d               time interval for evaluation [0.0005]
     --max_eval_time, -t,        maximum time for evaluation [0.025]

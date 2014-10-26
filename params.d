@@ -11,4 +11,7 @@ struct Params_t {
     double[] leaf_times;
     int minFreq;
     int[][] exclude_list;
+    int[] indices;
+    int max_af;
+    int nrCalledBases;
 }
