@@ -13,7 +13,7 @@ class Data {
     int max_m;
     int[][] standardOrder;
 
-    this(string fn, int max_af, int[] indices, int nrCalledBases) {
+    this(string fn, int max_af, int[] indices, long nrCalledBases) {
         char[] line;
         auto f = File(fn, "r");
         f.readln(line);
@@ -29,6 +29,8 @@ class Data {
         f.readln(line);
         enforce(line[0..6] == "MAX_M=", "Expect 'N=' in file");
         max_m = line[6..$].strip().to!int();
+        f.readln(line);
+        enforce(line[0..11] == "GLOBAL_MAX=", "Expect 'GLOBAL_MAX' in file");
         if(max_m > max_af)
             max_m = max_af;
         foreach(line_; f.byLine) {
@@ -55,7 +57,7 @@ class Data {
         normalize(nrCalledBases);
     }
     
-    private void normalize(int nrCalledBases) {
+    private void normalize(long nrCalledBases) {
         auto sum = 0;
         foreach(key, val; counts) {
             if(key.reduce!"a+b"() > 0)

@@ -9,10 +9,11 @@ import std.exception;
 import model;
 
 double approx_exp(double arg) {
-    if(abs(arg) < 0.05)
-        return 1.0 + arg;
-    else
-        return exp(arg);
+    return exp(arg);
+    // if(abs(arg) < 0.05)
+    //     return 1.0 + arg;
+    // else
+    //     return exp(arg);
 }
 
 class CoalState {
@@ -77,7 +78,7 @@ class CoalState {
     
     void update_a(double t_delta) {
         foreach(int k, aa; a) {
-            if(t > model.leaf_times[k]) {
+            if(t + t_delta > model.leaf_times[k]) {
                 auto lambda_ = modelState.coal_rate(k);
                 a_buf[k] = aa * approx_exp(-(aa - 1.0) / 2.0 * lambda_ * t_delta);
             }
@@ -88,7 +89,7 @@ class CoalState {
     
     void update_b(double t_delta) {
         foreach(k; 0 .. model.P) {
-            if(t > model.leaf_times[k]) {
+            if(t + t_delta > model.leaf_times[k]) {
                 auto lambda_ = modelState.coal_rate(k);
                 b_buf[k][] = 0.0;
                 foreach(i; 0 .. max_m[k] + 1) {

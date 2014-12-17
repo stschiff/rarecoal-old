@@ -63,14 +63,13 @@ in {
 }
 body {
     auto f = File(spectrumfile, "w");
-    auto L = input_dat.counts.values.reduce!"a+b"() + input_dat.higher;
-    foreach(key, count; input_dat.counts) {
+    foreach(key; input_dat.standardOrder) {
         if(key.reduce!"a+b"() == 0)
             continue;
         auto state = new CoalState(model, key);
         auto factor = zip(input_dat.nVec, key).map!(x => binom(x[0], x[1])).reduce!"a*b"();
         stepper.run(state);
-        auto pred = theta * state.d * factor * L;
-        f.writefln("%s %s %s", key.map!"text(a)"().join(","), count, pred);
+        auto pred = theta * state.d * factor;
+        f.writefln("%s\t%s", key.map!"text(a)"().join(","), pred);
     }
 }

@@ -19,4 +19,7 @@ build/debug/unittest : *.d
 clean:
 	rm -rf build/debug/* build/release/*
 
+test: test.d model.d coal_state.d
+	dmd test.d model.d coal_state.d
+
 .PHONY: clean unittest

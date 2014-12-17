@@ -34,6 +34,9 @@ class Stepper {
         foreach(i; 1 .. nr_steps) {
             auto next_t = time_boundaries[i];
             state.step(next_t);
+            // if(next_t < 0.0002) {
+            //   stderr.writeln(next_t, " ", state.a, " ", state.b, " ", state.d);
+            // }
         }
     }
 }

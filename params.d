@@ -13,5 +13,5 @@ struct Params_t {
     int[][] exclude_list;
     int[] indices;
     int max_af;
-    int nrCalledBases;
+    long nrCalledBases;
 }
